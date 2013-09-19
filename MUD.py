@@ -140,6 +140,7 @@ class Chat(LineReceiver):
                     c.execute("UPDATE RoomPlayers SET " + column + "=? WHERE ID=?", ('', self.room))
                     conn.commit()
                     count = count + 1
+        self.RemovefromRooms()
         if self.users.has_key(self.name):
             message = "%s has disconnected" % (self.name)
             del self.users[self.name]
@@ -181,7 +182,16 @@ class Chat(LineReceiver):
             self.room = test[1]
             self.lastroom = self.room
             room = self.room
+            if self.room in (1,2,3,4,5,6,7,8,9,10,11,12):
+                self.regionname = 'Exordior'
+            if self.room in (13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29):
+                self.regionname = 'Cave of Exordior'
             roomc = (room,)
+            c.execute('''SELECT * FROM RoomExits WHERE ID=?''', roomc)
+            roomfetch = c.fetchone()
+            self.xcoord = int(roomfetch[10])
+            self.ycoord = int(roomfetch[11])
+            self.zcoord = int(roomfetch[12])
             c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
             test = c.fetchone()
             count = 1
@@ -294,6 +304,7 @@ class Chat(LineReceiver):
         t = (r, t,)
 #        try:
         c.execute('UPDATE Placement SET Room=? WHERE Name=?', t)
+        conn.commit()
         l = self.classname
         b = self.level
         cc = self.exp
@@ -1446,19 +1457,53 @@ class Chat(LineReceiver):
             self.sendLine("%s" % wdescription)
         self.sendLine("")
         rooms = "available exits are: "
-        if test[6] not in ('', None):
-            rooms = rooms + " N"
-        if test[8] not in ('', None):
-            rooms = rooms + " S"
-        if test[7] not in ('', None):
-            rooms = rooms + " E"
-        if test[9] not in ('', None):
-            rooms = rooms + " W"
+        if self.adminmode == True:
+            if test[6] not in ('', None):
+                rooms = rooms + " N(" + str(test[6]) + ')'
+            if test[8] not in ('', None):
+                rooms = rooms + " S(" + str(test[8]) + ')'
+            if test[7] not in ('', None):
+                rooms = rooms + " E(" + str(test[7]) + ')'
+            if test[9] not in ('', None):
+                rooms = rooms + " W(" + str(test[9]) + ')'
+        else:
+            if test[6] not in ('', None):
+                rooms = rooms + " N"
+            if test[8] not in ('', None):
+                rooms = rooms + " S"
+            if test[7] not in ('', None):
+                rooms = rooms + " E"
+            if test[9] not in ('', None):
+                rooms = rooms + " W"
         self.sendLine("%s" % rooms)
         self.displayPlayers()
         self.displayMobs()
 
 
+
+    def RemovefromRooms(self):
+        global c
+        count10 = 1
+        while count10 <= 200:
+            room = count10
+            roomc = (room,)
+            c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
+            test = c.fetchone()
+            if test is None:
+                count10 = 10000
+            else:
+                counter = 1
+                while counter <= 20:
+                    if test[counter] in('', None, 'None'):
+                        counter += 1
+                    else:
+                        name = str(test[counter])
+                        if name == self.name:
+                            column = "'Slot" + str(counter) + "'"
+                            c.execute("UPDATE RoomPlayers SET " + column + "=? WHERE ID=?", ('', room))
+                            conn.commit()
+                        counter += 1
+            count10 += 1
 #COMMANDS
     def handle_CLEARSCREEN(self):
         self.sendLine("")
@@ -2563,6 +2608,12 @@ class Chat(LineReceiver):
             except:
                 print "Lookup not working"
             return
+        if(message[0:3] == '/tp'):
+            location = message[4:]
+            if self.adminmode == True:
+                self.Teleport(location)
+            else:
+                self.sendLine("Not an admin")
         if(message == '/look'):
             self.LOOK()
             return
@@ -3104,8 +3155,13 @@ class Chat(LineReceiver):
                 count = count + 1
 
     def LocationPrint(self):
-        self.sendLine("Region   : %s" % self.regionname)
-        self.sendLine("Position : (%s, %s, %s)" % (self.xcoord, self.ycoord, self.zcoord))
+        if self.adminmode == True:
+            self.sendLine("Region   : %s" % self.regionname)
+            self.sendLine("Room     : %s" % self.room)
+            self.sendLine("Position : (%s, %s, %s)" % (self.xcoord, self.ycoord, self.zcoord))
+        else:
+            self.sendLine("Region   : %s" % self.regionname)
+            self.sendLine("Position : (%s, %s, %s)" % (self.xcoord, self.ycoord, self.zcoord))
 
     def handle_SAY(self, message):
         if(message == '/c'):
@@ -3163,6 +3219,30 @@ class Chat(LineReceiver):
         self.spawn = False
         reactor.callLater(600.0, self.SpawnReset)
         pass
+
+    def Teleport(self, room):
+        try:
+            val = int(room)
+            self.handle_CLEARSCREEN()
+            self.sendLine("You have teleported to room %s" % val)
+            self.room = int(room)
+            self.updateRoom('Teleport', 'Teleport')
+            self.displayExits()
+        except ValueError:
+            print("Recived name")
+            player = str(room)
+            self.handle_CLEARSCREEN()
+            global userlist
+            diction = userlist
+            playerid = userlist.get(player)
+            if playerid in(None, ''):
+                self.sendLine("Invalid target")
+            else:
+                self.sendLine("You have teleported to player %s" % player)
+                self.room = playerid.room
+                self.updateRoom('Teleport', 'Teleport')
+                self.displayExits()
+
 
     def SpawnReset(self):
         self.spawn = True
