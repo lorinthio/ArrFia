@@ -1789,20 +1789,22 @@ class Chat(LineReceiver):
                 member = party[count]
                 person = str(member)
                 if person == self.name:
-                    self.sendLine("You have left the party")
                     count += 1
                 else:
                     member = diction.get(person)
                     member.sendLine("(Party)%s has left the party" %(self.name))
-                    memberparty = member.party
-                    memberparty.remove(self.name)
-                    print member.party
-                    count = count + 1
+                    count += 1
+            member = party[0]
+            person = str(member)
+            member = diction.get(person)
+            memberparty = member.party
+            memberparty.remove(self.name)
+            print member.party
             self.party = []
             party = self.party
             party.append(self.name)
-            print self.party
             self.partybool = False
+            self.sendLine("You have left the party")
 
     def PartyResponse(self, response):
         party = self.party
@@ -2573,7 +2575,7 @@ class Chat(LineReceiver):
         if(message[0:6] == '/admin'):
             if self.adminmode == True:
                 self.sendLine("Admin mode turned off")
-                self.adminmode == False
+                self.adminmode = False
             else:
                 password = message[7:]
                 self.AdminChange(password)
@@ -2590,10 +2592,10 @@ class Chat(LineReceiver):
             else:
                 self.PartyInvite(person)
                 return
-        if(message[0:12] == '/party leave'):
+        if(message == '/party leave'):
             self.PartyLeave()
             return
-        if(message[0:6] == '/party'):
+        if(message == '/party'):
             self.PartyDisplayStats()
             return
         if(message == '/suicide'):
@@ -2620,24 +2622,6 @@ class Chat(LineReceiver):
                 self.togglePK()
             else:
                 self.sendLine("Cannot change pk mode yet...")
-        if(message[0:2] == '/s'):
-            if(message[0:4] == '/say'):
-                check = message[5:]
-                if check in(None, ''):
-                    self.state = "SAY"
-                    self.sendLine("Now in chat mode : SAY")
-                    self.sendLine("To leave this mode simply type /c to cancel")
-                else:
-                    self.handle_SAY(check)
-            if(message[0:3] == '/s '):
-                check = message[3:]
-                if check in(None, ''):
-                    self.state = "SAY"
-                    self.sendLine("Now in chat mode : SAY")
-                    self.sendLine("To leave this mode simply type /c to cancel")
-                else:
-                    self.handle_SAY(check)
-            return
         if(message[0:2] == '/a'):
             #try:
             check = message[3:]
@@ -2662,6 +2646,10 @@ class Chat(LineReceiver):
                 self.PartyChat(message)
             else :
                 self.sendLine("No party to talk to")
+            return
+        if(message[0:1] != '/'):
+            message = message[0:]
+            self.handle_SAY(message)
 
     def togglePK(self):
         self.pkswitch = False
@@ -3810,4 +3798,5 @@ l.start(10.0)
 print "Server Started at localhost on Port : 8123"
 reactor.listenTCP(8123, ChatFactory())
 reactor.run()
+conn.commit()
 c.close()
