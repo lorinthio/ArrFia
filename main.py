@@ -14,6 +14,10 @@ conn = sqlite3.connect('MUD.db')
 c = conn.cursor()
 userlist = {}
 
+def StopAll():
+    print "Everyone disconnected, safe to close..."
+    reactor.stop()
+
 
 class Chat(LineReceiver):
 
@@ -140,7 +144,6 @@ class Chat(LineReceiver):
                     c.execute("UPDATE RoomPlayers SET " + column + "=? WHERE ID=?", ('', self.room))
                     conn.commit()
                     count = count + 1
-        self.RemovefromRooms()
         if self.users.has_key(self.name):
             message = "%s has disconnected" % (self.name)
             del self.users[self.name]
@@ -182,10 +185,12 @@ class Chat(LineReceiver):
             self.room = test[1]
             self.lastroom = self.room
             room = self.room
-            if self.room in (1,2,3,4,5,6,7,8,9,10,11,12):
+            if (self.room >= 1) and (self.room <= 12):
                 self.regionname = 'Exordior'
-            if self.room in (13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29):
+            if (self.room >= 13) and (self.room <= 29):
                 self.regionname = 'Cave of Exordior'
+            if (self.room >= 30) and (self.room <= 64):
+                self.regionname = 'Exordior Mine'
             roomc = (room,)
             c.execute('''SELECT * FROM RoomExits WHERE ID=?''', roomc)
             roomfetch = c.fetchone()
@@ -1350,6 +1355,24 @@ class Chat(LineReceiver):
             else:
                 self.sendLine("Cannot go this direction")
                 self.displayExits()
+        c.execute('''SELECT * FROM RoomUpDown WHERE ID=?''', room)
+        test = c.fetchone()
+        if direction in ('D', 'd', 'down', 'Down'):
+            if test[2] not in ('', None):
+                self.room = test[2]
+                self.updateRoom('Down', 'Above')
+                self.displayExits()
+            else:
+                self.sendLine("Cannot go this direction")
+                self.displayExits()
+        if direction in ('U', 'u', 'up', 'Up'):
+            if test[1] not in ('', None):
+                self.room = test[1]
+                self.updateRoom('Up', 'Below')
+                self.displayExits()
+            else:
+                self.sendLine("Cannot go this direction")
+                self.displayExits()
 
     def updateRoom(self, direction, opposite):
         global c
@@ -1425,10 +1448,12 @@ class Chat(LineReceiver):
                 self.xcoord = str(fetch[10])
                 self.ycoord = str(fetch[11])
                 self.zcoord = str(fetch[12])
-                if self.room in (1,2,3,4,5,6,7,8,9,10,11,12):
+                if (self.room >= 1) and (self.room <= 12):
                     self.regionname = 'Exordior'
-                if self.room in (13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29):
+                if (self.room >= 13) and (self.room <= 29):
                     self.regionname = 'Cave of Exordior'
+                if (self.room >= 30) and (self.room <= 64):
+                    self.regionname = 'Exordior Mine'
                 conn.commit()
                 counter = 30
 #        else:
@@ -1441,6 +1466,8 @@ class Chat(LineReceiver):
         room = (self.room,)
         c.execute("""SELECT * FROM RoomExits where ID=?""", room)
         test = c.fetchone()
+        c.execute('''SELECT * FROM RoomUpDown WHERE ID=?''', room)
+        test2 = c.fetchone()
         description = str(test[1])
         ndescription = str(test[2])
         edescription = str(test[3])
@@ -1466,6 +1493,11 @@ class Chat(LineReceiver):
                 rooms = rooms + " E(" + str(test[7]) + ')'
             if test[9] not in ('', None):
                 rooms = rooms + " W(" + str(test[9]) + ')'
+            if test2 != None:
+                if test2[1] not in ('', None):
+                    rooms = rooms + " U(" + str(test2[1]) + ')'
+                if test2[2] not in ('', None):
+                    rooms = rooms + " D(" + str(test2[2]) + ')'
         else:
             if test[6] not in ('', None):
                 rooms = rooms + " N"
@@ -1475,35 +1507,27 @@ class Chat(LineReceiver):
                 rooms = rooms + " E"
             if test[9] not in ('', None):
                 rooms = rooms + " W"
+            if test2 != None:
+                if test2[1] not in ('', None):
+                    rooms = rooms + " U"
+                if test2[2] not in ('', None):
+                    rooms = rooms + " D"
         self.sendLine("%s" % rooms)
         self.displayPlayers()
         self.displayMobs()
 
 
 
-    def RemovefromRooms(self):
-        global c
-        count10 = 1
-        while count10 <= 200:
-            room = count10
-            roomc = (room,)
-            c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
-            test = c.fetchone()
-            if test is None:
-                count10 = 10000
-            else:
-                counter = 1
-                while counter <= 20:
-                    if test[counter] in('', None, 'None'):
-                        counter += 1
-                    else:
-                        name = str(test[counter])
-                        if name == self.name:
-                            column = "'Slot" + str(counter) + "'"
-                            c.execute("UPDATE RoomPlayers SET " + column + "=? WHERE ID=?", ('', room))
-                            conn.commit()
-                        counter += 1
-            count10 += 1
+
+    def LocationPrint(self):
+        if self.adminmode == True:
+            self.sendLine("Region   : %s" % self.regionname)
+            self.sendLine("Room     : %s" % self.room)
+            self.sendLine("Position : (%s, %s, %s)" % (self.xcoord, self.ycoord, self.zcoord))
+        else:
+            self.sendLine("Region   : %s" % self.regionname)
+            self.sendLine("Position : (%s, %s, %s)" % (self.xcoord, self.ycoord, self.zcoord))
+
 #COMMANDS
     def handle_CLEARSCREEN(self):
         self.sendLine("")
@@ -2012,7 +2036,7 @@ class Chat(LineReceiver):
         else:
             self.name = name
             self.handle_WELCOME(name)
-
+# Admin Commands
     def AdminChange(self, password):
         if password == 'Max':
             self.adminmode = True
@@ -2020,11 +2044,58 @@ class Chat(LineReceiver):
         else:
             self.sendLine("Incorrect password, or no password entered...")
 
-    def rest(self):
-        self.health = self.maxhealth
-        self.mana = self.maxmana
-        self.restready = False
-        self.sendLine("You rest for a while, and you vitals are now maxed")
+    def Teleport(self, room):
+        try:
+            val = int(room)
+            self.handle_CLEARSCREEN()
+            self.sendLine("You have teleported to room %s" % val)
+            self.room = int(room)
+            self.updateRoom('Teleport', 'Teleport')
+            self.displayExits()
+        except ValueError:
+            print("Recived name")
+            player = str(room)
+            self.handle_CLEARSCREEN()
+            global userlist
+            diction = userlist
+            playerid = userlist.get(player)
+            if playerid in(None, ''):
+                self.sendLine("Invalid target")
+            else:
+                self.sendLine("You have teleported to player %s" % player)
+                self.room = playerid.room
+                self.updateRoom('Teleport', 'Teleport')
+                self.displayExits()
+
+    def List(self):
+        global userlist
+        diction = userlist
+        for key, value in diction.iteritems():
+            player = diction.get(key)
+            name = player.name
+            level = player.level
+            classname = player.classname
+            regionname = player.regionname
+            self.sendLine("%s, Level %s, %s   [%s]" % (name, level, classname, regionname))
+
+    def Stop(self, reason):
+        global userlist
+        diction = userlist
+        line = "###SERVER### : Server is being stopped in 30 seconds for : " + reason
+        for key, value in diction.iteritems():
+            player = diction.get(key)
+            player.sendLine(line)
+            player.sendLine("Please get somewhere safe...")
+        print "SERVER called to stop by...", self.name
+        reactor.callLater(30.0, self.StopAll)
+
+    def StopAll(self):
+        global userlist
+        diction = userlist
+        for key, value in diction.iteritems():
+            player = diction.get(key)
+            player.EXIT()
+        reactor.callLater(3.0, StopAll)
 
 ##########################
 ##                      ##
@@ -2531,6 +2602,16 @@ class Chat(LineReceiver):
             self.handle_CLEARSCREEN()
             self.moveRooms(message)
             return
+        if message in ('d', 'D', 'Down', 'down'):
+            message = str(message)
+            self.handle_CLEARSCREEN()
+            self.moveRooms(message)
+            return
+        if message in ('u', 'U', 'Up', 'up'):
+            message = str(message)
+            self.handle_CLEARSCREEN()
+            self.moveRooms(message)
+            return
         if(message == '/help'):
             if self.adminmode == False:
                 self.sendLine("The commands available to you are...")
@@ -2571,9 +2652,14 @@ class Chat(LineReceiver):
                 self.sendLine("/s                   *Locks say chat mode. (use /c to return)")
                 self.sendLine("/say <message>       *Talks to other users")
                 self.sendLine("/spawn               *Return to spawn immeadiately (30min cooldown)")
+                self.sendLine("/stop                *Kicks everyone off the server then stops it")
                 self.sendLine("/stats               *Looks up your own stats")
                 self.sendLine("/suicide             *Commits suicide")
+                self.sendLine("/tp <user or room>   *Teleports you to a player or roomID")
                 self.sendLine("/w <user>            *Enter private chat mode")
+            return
+        if(message == '/time'):
+            self.Time()
             return
         if(message == '/pos'):
             self.LocationPrint()
@@ -2595,9 +2681,11 @@ class Chat(LineReceiver):
                     self.sendLine("You cannot rest so soon")
             else:
                 self.sendLine("It is too dangerous to rest here...")
+            return
         if(message == '/changepass'):
             self.sendLine("What do you want your password to be?")
             self.state = "CHANGEPASS"
+            return
         if(message[0:7] == '/lookup'):
             try:
                 message = message[8:]
@@ -2613,7 +2701,21 @@ class Chat(LineReceiver):
             if self.adminmode == True:
                 self.Teleport(location)
             else:
-                self.sendLine("Not an admin")
+                pass
+            return
+        if(message[0:5] == '/stop'):
+            message = message[6:]
+            if self.adminmode == True:
+                self.Stop(message)
+            else:
+                pass
+            return
+        if(message == '/list'):
+            if self.adminmode == True:
+                self.List()
+            else:
+                pass
+            return
         if(message == '/look'):
             self.LOOK()
             return
@@ -2636,6 +2738,13 @@ class Chat(LineReceiver):
             except:
                 print "Clear not working"
             return
+        if(message == '/info'):
+            try:
+                self.sendLine("in /info")
+                test.Info(self)
+            except:
+                self.sendLine("Didn't work'")
+                self.List()
         if(message[0:13] == '/party invite'):
             person = message[14:]
             if person in(None, ''):
@@ -3154,15 +3263,6 @@ class Chat(LineReceiver):
                 member.sendLine("You need %s more to next level." % (self.exptnl))
                 count = count + 1
 
-    def LocationPrint(self):
-        if self.adminmode == True:
-            self.sendLine("Region   : %s" % self.regionname)
-            self.sendLine("Room     : %s" % self.room)
-            self.sendLine("Position : (%s, %s, %s)" % (self.xcoord, self.ycoord, self.zcoord))
-        else:
-            self.sendLine("Region   : %s" % self.regionname)
-            self.sendLine("Position : (%s, %s, %s)" % (self.xcoord, self.ycoord, self.zcoord))
-
     def handle_SAY(self, message):
         if(message == '/c'):
             self.state = "CHAT"
@@ -3220,29 +3320,19 @@ class Chat(LineReceiver):
         reactor.callLater(600.0, self.SpawnReset)
         pass
 
-    def Teleport(self, room):
-        try:
-            val = int(room)
-            self.handle_CLEARSCREEN()
-            self.sendLine("You have teleported to room %s" % val)
-            self.room = int(room)
-            self.updateRoom('Teleport', 'Teleport')
-            self.displayExits()
-        except ValueError:
-            print("Recived name")
-            player = str(room)
-            self.handle_CLEARSCREEN()
-            global userlist
-            diction = userlist
-            playerid = userlist.get(player)
-            if playerid in(None, ''):
-                self.sendLine("Invalid target")
-            else:
-                self.sendLine("You have teleported to player %s" % player)
-                self.room = playerid.room
-                self.updateRoom('Teleport', 'Teleport')
-                self.displayExits()
-
+    def Time(self):
+        global c
+        c.execute('''SELECT * From ServerTime''')
+        fetch = c.fetchone()
+        localmin = int(fetch[1])
+        localhour = int(fetch[2])
+        night = bool(fetch[3])
+        if night == True:
+            localtime = 'pm'
+        else:
+            localtime = 'am'
+        line = 'Arrfia Time : ' + str(localhour) + ':' + str(localmin) + ' ' + localtime
+        self.sendLine(line)
 
     def SpawnReset(self):
         self.spawn = True
@@ -3253,6 +3343,13 @@ class Chat(LineReceiver):
         self.handle_CLEARSCREEN()
         self.sendLine("You may now close the window safely")
         self.connectionLost(leave)
+
+    def rest(self):
+        self.health = self.maxhealth
+        self.mana = self.maxmana
+        self.restready = False
+        self.sendLine("You rest for a while, and you vitals are now maxed")
+
 
     def handle_WHISPER(self, message1):
         try:
@@ -3365,10 +3462,39 @@ class MobSpawner():
         # ExordiorCave
         self.MobMax = 15
         self.SpawnRate = 5
-        self.Rooms = [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]
+        self.Rooms = []
+        rooms = self.Rooms
+        counter = 13
+        while counter <= 29:
+            if counter in (20, 13, 14):
+                counter += 1
+            else:
+                rooms.append(counter)
+                counter += 1
         self.Mobs = [1, 3, 7]
-        self.RoomMax = 3
+        self.RoomMax = 2
         self.regionname = 'Exordior Cave'
+        name = (self.regionname,)
+        c.execute('''SELECT * FROM Regions WHERE Name=?''', name)
+        test= c.fetchone()
+        self.Mobcount = test[1]
+        self.RandomMobGenerator()
+
+        # Exordior Mine
+        self.MobMax = 38
+        self.SpawnRate = 5
+        self.Rooms = []
+        rooms = self.Rooms
+        counter = 30
+        while counter <= 64:
+            if counter in(50, 30):
+                counter += 1
+            else:
+                rooms.append(counter)
+                counter += 1
+        self.Mobs = [4, 5, 10]
+        self.RoomMax = 3
+        self.regionname = 'Exordior Mine'
         name = (self.regionname,)
         c.execute('''SELECT * FROM Regions WHERE Name=?''', name)
         test= c.fetchone()
@@ -3873,10 +3999,112 @@ class MobFight():
         if count == 6:
             self.targetname = str(fetch[11])
 
+
+class DayNight():
+
+    def __init__(self):
+        global c
+        c.execute('''SELECT * From ServerTime''')
+        fetch = c.fetchone()
+        self.minute = int(fetch[1])
+        self.hour = int(fetch[2])
+        self.night = bool(fetch[3])
+        self.Time()
+        c.execute('''UPDATE ServerTime SET Minutes=?, Hours=?, Night=? WHERE Server='Server' ''', (self.minute, self.hour, self.night))
+        conn.commit()
+
+    def Time(self):
+        currentmin = self.minute
+        rate = 1
+        newmin = currentmin + rate
+        if newmin >= 60:
+            print "it has been an hour ingame"
+            self.hour += 1
+            if self.hour == 6:
+                if self.night == True:
+                    self.AlmostDay()
+                else:
+                    self.AlmostNight()
+            if self.hour == 8:
+                if self.night == True:
+                    self.Day()
+                else:
+                    self.Night()
+            if self.hour >= 13:
+                self.hour -= 12
+            newmin = newmin - 60
+            self.minute = newmin
+        else:
+            self.minute = newmin
+
+    def Night(self):
+        self.night = True
+        global userlist
+        diction = userlist
+        for key, value in diction.iteritems():
+            player = diction.get(key)
+            player.sendLine("TIME : It is now night time")
+        print "It is now Night"
+
+    def AlmostNight(self):
+        global userlist
+        diction = userlist
+        for key, value in diction.iteritems():
+            player = diction.get(key)
+            player.sendLine("TIME : It is starting to get dark...")
+
+    def Day(self):
+        self.night = False
+        global userlist
+        diction = userlist
+        for key, value in diction.iteritems():
+            player = diction.get(key)
+            player.sendLine("TIME : It is now day time")
+        print "It is now Day"
+
+    def AlmostDay(self):
+        global userlist
+        diction = userlist
+        for key, value in diction.iteritems():
+            player = diction.get(key)
+            player.sendLine("TIME : The sun begins to rise")
+
+time = task.LoopingCall(DayNight)
+time.start(4.0)
 l = task.LoopingCall(MobSpawner)
 l.start(10.0)
 print "Server Started at localhost on Port : 8123"
 reactor.listenTCP(8123, ChatFactory())
 reactor.run()
+
+def EmptyRooms():
+    global c
+    count10 = 1
+    while count10 <= 1000:
+        room = count10
+        roomc = (room,)
+        c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
+        test = c.fetchone()
+        if test is None:
+            count10 = 10000
+        else:
+            counter = 1
+            while counter <= 20:
+                if test[counter] in('', None, 'None'):
+                    counter += 1
+                else:
+                    column = "'Slot" + str(counter) + "'"
+                    c.execute("UPDATE RoomPlayers SET " + column + "=? WHERE ID=?", ('', room))
+                    conn.commit()
+                    counter += 1
+        count10 += 1
+
+print "Closed!"
+
+EmptyRooms()
+
+print "Rooms empty!"
 conn.commit()
 c.close()
+print "Hit enter to close the window"
+enter = raw_input()
