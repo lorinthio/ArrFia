@@ -81,6 +81,8 @@ class Chat(LineReceiver):
         self.mattack = 0
         self.mdefence = 0
         self.dodge = 0
+        self.spot = 0
+        self.sneak = 0
         self.accuracy = 0
         self.critical = 0
         self.speedmod = 0
@@ -98,36 +100,74 @@ class Chat(LineReceiver):
         self.adminmode = False
         ### INVENTORY
         self.gold = 0
-        self.slot1 = ''
-        self.slot2 = ''
-        self.slot3 = ''
-        self.slot4 = ''
-        self.slot5 = ''
-        self.slot6 = ''
-        self.slot7 = ''
-        self.slot8 = ''
-        self.slot9 = ''
-        self.slot10 = ''
-        self.slot11 = ''
-        self.slot12 = ''
-        self.slot13 = ''
-        self.slot14 = ''
-        self.slot15 = ''
-        self.slot16 = ''
-        self.slot17 = ''
-        self.slot18 = ''
-        self.slot19 = ''
-        self.slot20 = ''
+        self.slot1 = 0
+        self.slot1name = ''
+        self.slot2 = 0
+        self.slot2name = ''
+        self.slot3 = 0
+        self.slot3name = ''
+        self.slot4 = 0
+        self.slot4name = ''
+        self.slot5 = 0
+        self.slot5name = ''
+        self.slot6 = 0
+        self.slot6name = ''
+        self.slot7 = 0
+        self.slot7name = ''
+        self.slot8 = 0
+        self.slot8name = ''
+        self.slot9 = 0
+        self.slot9name = ''
+        self.slot10 = 0
+        self.slot10name = ''
+        self.slot11 = 0
+        self.slot11name = ''
+        self.slot12 = 0
+        self.slot12name = ''
+        self.slot13 = 0
+        self.slot13name = ''
+        self.slot14 = 0
+        self.slot14name = ''
+        self.slot15 = 0
+        self.slot15name = ''
+        self.slot16 = 0
+        self.slot16name = ''
+        self.slot17 = 0
+        self.slot17name = ''
+        self.slot18 = 0
+        self.slot18name = ''
+        self.slot19 = 0
+        self.slot19name = ''
+        self.slot20 = 0
+        self.slot20name = ''
         self.regionname = ''
         self.xcoord = 0
         self.ycoord = 0
         self.zcoord = 0
+
+        # ADVENTURE SKILLS
+        self.Climbing = 1
+        self.Swimming = 1
+        self.Spotskill = 1
+        self.Sneakskill = 1
+
+        # GATHERING SKILLS
+        self.Mining = 1
+        self.Foraging = 1
+        self.Logging = 1
+
+        # CRAFTING SKILLS
+        self.Woodcutting = 1
+        self.Fletching = 1
+        self.Stonecutting = 1
+        self.Tanning = 1
 
     def connectionMade(self):
         self.sendLine("Username :")
         self.state = "LOGINCHECK"
 
     def connectionLost(self, leave):
+        self.PartyLeave()
         self.SAVE()
         global c
         room = self.room
@@ -264,26 +304,106 @@ class Chat(LineReceiver):
                     if(test == None):
                         print self.name, "has no inventory!"
                     if(test != None):
-                        self.slot1 = str(test[1])
-                        self.slot2 = str(test[2])
-                        self.slot3 = str(test[3])
-                        self.slot4 = str(test[4])
-                        self.slot5 = str(test[5])
-                        self.slot6 = str(test[6])
-                        self.slot7 = str(test[7])
-                        self.slot8 = str(test[8])
-                        self.slot9 = str(test[9])
-                        self.slot10 = str(test[10])
-                        self.slot11 = str(test[11])
-                        self.slot12 = str(test[12])
-                        self.slot13 = str(test[13])
-                        self.slot14 = str(test[14])
-                        self.slot15 = str(test[15])
-                        self.slot16 = str(test[16])
-                        self.slot17 = str(test[17])
-                        self.slot18 = str(test[18])
-                        self.slot19 = str(test[19])
-                        self.slot20 = str(test[20])
+                        self.slot1 = int(test[1])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot1,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot1name = str(fetch[1])
+                        self.slot2 = int(test[2])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot2,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot2name = str(fetch[1])
+                        self.slot3 = int(test[3])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot3,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot3name = str(fetch[1])
+                        self.slot4 = int(test[4])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot4,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot4name = str(fetch[1])
+                        self.slot5 = int(test[5])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot5,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot5name = str(fetch[1])
+                        self.slot6 = int(test[6])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot6,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot6name = str(fetch[1])
+                        self.slot7 = int(test[7])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot7,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot7name = str(fetch[1])
+                        self.slot8 = int(test[8])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot8,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot8name = str(fetch[1])
+                        self.slot9 = int(test[9])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot9,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot9name = str(fetch[1])
+                        self.slot10 = int(test[10])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot10,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot10name = str(fetch[1])
+                        self.slot11 = int(test[11])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot11,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot11name = str(fetch[1])
+                        self.slot12 = int(test[12])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot12,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot12name = str(fetch[1])
+                        self.slot13 = int(test[13])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot13,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot13name = str(fetch[1])
+                        self.slot14 = int(test[14])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot14,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot14name = str(fetch[1])
+                        self.slot15 = int(test[15])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot15,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot15name = str(fetch[1])
+                        self.slot16 = int(test[16])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot16,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot16name = str(fetch[1])
+                        self.slot17 = int(test[17])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot17,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot17name = str(fetch[1])
+                        self.slot18 = int(test[18])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot18,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot18name = str(fetch[1])
+                        self.slot19 = int(test[19])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot19,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot19name = str(fetch[1])
+                        self.slot20 = int(test[20])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot20,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot20name = str(fetch[1])
                         self.gold = test[21]
                 party = self.party
                 party.append(self.name)
@@ -423,6 +543,7 @@ class Chat(LineReceiver):
         v = self.gold
         w = self.name
         a = (w, b, cc, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v)
+        print a
         c.execute('INSERT INTO Inventory VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', a)
         b = self.health
         cc = self.mana
@@ -558,7 +679,15 @@ class Chat(LineReceiver):
         choice1 = choice[0:5]
         if(choice1 == '/pick'):
             choice2 = choice[6:]
-            if choice2 in('Human', "human", 'Slaad', 'slaad', 'halforc', 'Halforc', 'halfelf', 'Halfelf', 'gnome', 'Gnome', 'Elf', 'elf', 'Dwarf', 'dwarf'):
+            if choice2 in('Planetouched', 'planetouched', 'Bodak', 'bodak', 'Human', "human", 'Slaad', 'slaad', 'halforc', 'Halforc', 'halfelf', 'Halfelf', 'gnome', 'Gnome', 'Elf', 'elf', 'Dwarf', 'dwarf'):
+                if choice2 in ('Planetouched', 'planetouched'):
+                    self.race = 'Planetouched'
+                    self.CLASSLIST()
+                    self.state = "PSTART"
+                if choice2 in ('Bodak', 'bodak'):
+                    self.race = 'Bodak'
+                    self.CLASSLIST()
+                    self.state = "PSTART"
                 if choice2 in('Human', 'human'):
                     self.race = 'Human'
                     self.CLASSLIST()
@@ -592,7 +721,7 @@ class Chat(LineReceiver):
                 self.RACELIST()
         if(choice1 == '/info'):
             choice2 = choice[6:]
-            if choice2 in('Human', "human", 'Slaad', 'slaad', 'halforc', 'Halforc', 'halfelf', 'Halfelf', 'gnome', 'Gnome', 'Elf', 'elf', 'Dwarf', 'dwarf'):
+            if choice2 in('Planetouched', 'planetouched', 'Bodak', 'bodak', 'Human', "human", 'Slaad', 'slaad', 'halforc', 'Halforc', 'halfelf', 'Halfelf', 'gnome', 'Gnome', 'Elf', 'elf', 'Dwarf', 'dwarf'):
                 self.RACEINFO(choice2)
             else:
                 self.sendLine("invalid input")
@@ -600,6 +729,34 @@ class Chat(LineReceiver):
             self.RACELIST()
 
     def RACEINFO(self, answer):
+        if answer in('Planetouched', 'planetouched'):
+            self.handle_CLEARSCREEN()
+            self.sendLine("Planetouched are humans that have either a celestial or demon in")
+            self.sendLine("their ancestry. This leads them to be more powerful, but also")
+            self.sendLine("causes them to usually have a big ego...")
+            self.sendLine("")
+            self.sendLine("Bonus:                 Disadvantage:")
+            self.sendLine(" + 1 Strength           - 1 Agility")
+            self.sendLine(" + 1 Constitution")
+            self.sendLine(" + 1 Wisdom")
+            self.sendLine("")
+            self.sendLine("/list to display races again")
+            self.sendLine("/pick <racename> to move on")
+            self.sendLine("/info <racename> to see more information")
+        if answer in('Bodak', 'bodak'):
+            self.handle_CLEARSCREEN()
+            self.sendLine("Bodak are a race of undeads that have risen by their own spiritual")
+            self.sendLine("strength. They come back to seek revenge and will not stop till they")
+            self.sendLine("achieve their goal... or until they die... again")
+            self.sendLine("")
+            self.sendLine("Bonus:                 Disadvantage:")
+            self.sendLine(" + 2 Strength           - 2 Constitution")
+            self.sendLine(" + 1 Dexterity")
+            self.sendLine(" + 1 Intellegence")
+            self.sendLine("")
+            self.sendLine("/list to display races again")
+            self.sendLine("/pick <racename> to move on")
+            self.sendLine("/info <racename> to see more information")
         if answer in('human', 'Human'):
             self.handle_CLEARSCREEN()
             self.sendLine("Humans are the most common race in Arr'Fia. They are ")
@@ -616,8 +773,9 @@ class Chat(LineReceiver):
             self.sendLine("Half orcs are a race that was bred in a mix between human and orc.")
             self.sendLine("This crossbreed of a race gives birth to strong brethren")
             self.sendLine("")
-            self.sendLine("Bonus:")
-            self.sendLine(" + 2 Strength")
+            self.sendLine("Bonus:                 Disadvantage:")
+            self.sendLine(" + 3 Strength          -1 Wisdom")
+            self.sendLine(" + 1 Constitution      -1 Intellegence")
             self.sendLine("")
             self.sendLine("/list to display races again")
             self.sendLine("/pick <racename> to move on")
@@ -627,8 +785,9 @@ class Chat(LineReceiver):
             self.sendLine("A race that dwells in the forest and guards nature. This race is")
             self.sendLine("nimble and intellegent.")
             self.sendLine("")
-            self.sendLine("Bonus:")
-            self.sendLine(" + 1 Dexterity")
+            self.sendLine("Bonus:                 Disadvantage:")
+            self.sendLine(" + 1 Dexterity         - 1 Strength")
+            self.sendLine(" + 1 Agility")
             self.sendLine(" + 1 Wisdom")
             self.sendLine("")
             self.sendLine("/list to display races again")
@@ -639,9 +798,9 @@ class Chat(LineReceiver):
             self.sendLine("This race is known for its underground dwellings. They are masters")
             self.sendLine("of combat as well as craftsmanship.")
             self.sendLine("")
-            self.sendLine("Bonus:")
-            self.sendLine(" + 1 Strength")
-            self.sendLine(" + 1 Constitution")
+            self.sendLine("Bonus:                 Disadvantage:")
+            self.sendLine(" + 1 Strength          - 1 Intellegence")
+            self.sendLine(" + 2 Constitution")
             self.sendLine("")
             self.sendLine("/list to display races again")
             self.sendLine("/pick <racename> to move on")
@@ -651,9 +810,9 @@ class Chat(LineReceiver):
             self.sendLine("This race is of reptilian origin. These are beings with more brains")
             self.sendLine("then brawn. This race consists of mostly magic users.")
             self.sendLine("")
-            self.sendLine("Bonus:")
-            self.sendLine(" + 1 Wisdom")
-            self.sendLine(" + 1 Intellegence")
+            self.sendLine("Bonus:                 Disadvantage:")
+            self.sendLine(" + 1 Wisdom            - 1 Constitution")
+            self.sendLine(" + 2 Intellegence")
             self.sendLine("")
             self.sendLine("/list to display races again")
             self.sendLine("/pick <racename> to move on")
@@ -663,9 +822,10 @@ class Chat(LineReceiver):
             self.sendLine("This race is a cross breed of humans and elves. They are leaner and")
             self.sendLine("more agile. While retaining good health")
             self.sendLine("")
-            self.sendLine("Bonus:")
-            self.sendLine(" + 1 Constitution")
+            self.sendLine("Bonus:                 Disadvantage:")
+            self.sendLine(" + 1 Constitution      - 1 Intellegence")
             self.sendLine(" + 1 Dexterity")
+            self.sendLine(" + 1 Wisdom")
             self.sendLine("")
             self.sendLine("/list to display races again")
             self.sendLine("/pick <racename> to move on")
@@ -675,8 +835,9 @@ class Chat(LineReceiver):
             self.sendLine("This race is one that enjoys a good tune, and are very cunning.")
             self.sendLine("They are very quick on their feet and make for great rogues")
             self.sendLine("")
-            self.sendLine("Bonus:")
-            self.sendLine(" + 2 Agility")
+            self.sendLine("Bonus:                 Disadvantage:")
+            self.sendLine(" + 2 Agility           - 1 Strength")
+            self.sendLine(" + 1 Dexterity")
             self.sendLine("")
             self.sendLine("/list to display races again")
             self.sendLine("/pick <racename> to move on")
@@ -693,15 +854,17 @@ class Chat(LineReceiver):
 
     def RACELIST(self):
             self.sendLine("Races:")
-            self.sendLine("- Human   (+2 choice stats)")
-            self.sendLine("- Elf     (+1 Dex, +1 Wis)")
-            self.sendLine("- HalfElf (+1 Dex, + 1 Con)")
-            self.sendLine("- Dwarf   (+1 Str, +1 Con)")
-            self.sendLine("- Slaad   (+1 Wis, +1 Int)")
-            self.sendLine("- HalfOrc (+2 Str)")
-            self.sendLine("- Gnome   (+2 Agi)")
+            self.sendLine("- Bodak")
+            self.sendLine("- Dwarf")
+            self.sendLine("- Elf")
+            self.sendLine("- Gnome")
+            self.sendLine("- HalfElf")
+            self.sendLine("- HalfOrc")
+            self.sendLine("- Human")
+            self.sendLine("- Planetouched")
+            self.sendLine("- Slaad")
             self.sendLine("")
-            self.sendLine("Use /info <racename> for detailed info")
+            self.sendLine("Use /info <racename> for detailed info on advantages and disadvantages")
             self.sendLine("Or use /pick <racename> to move into your class decision")
 
     def handle_CHECKPASS(self, answer):
@@ -905,21 +1068,42 @@ class Chat(LineReceiver):
         self.sendLine("Intellegence : %s" % (self.intellegence))
 
     def RaceAdds(self):
+        if self.race == 'Planetouched':
+            self.strength += 1
+            self.constitution += 1
+            self.wisdom += 1
+            self.agility = self.agility - 1
+        if self.race == 'Bodak':
+            self.strength += 2
+            self.constitution = self.constitution - 2
+            self.dexterity += 1
+            self.intellegence += 1
         if self.race == 'Half Elf':
             self.constitution += 1
             self.dexterity += 1
+            self.wisdom += 1
+            self.intellegence = self.intellegence - 1
         if self.race == 'Gnome':
             self.agility += 2
+            self.dexterity += 1
+            self.strength = self.strength - 1
         if self.race == 'Half Orc':
-            self.strength += 2
+            self.strength += 3
+            self.constitution += 1
+            self.intellegence = self.intellegence - 1
+            self.wisdom = self.wisdom - 1
         if self.race == 'Slaad':
-            self.wisdom += 1
+            self.wisdom += 2
+            self.constitution = self.constitution - 1
             self.intellegence += 1
         if self.race == 'Dwarf':
             self.strength += 1
-            self.constitution += 1
+            self.constitution += 2
+            self.intellegence = self.intellegence - 1
         if self.race == 'Elf':
+            self.strength = self.strength - 1
             self.dexterity += 1
+            self.agility += 1
             self.wisdom += 1
 
     def MakeWarrior(self):
@@ -1000,6 +1184,13 @@ class Chat(LineReceiver):
 
     def CCCHECK(self, answer):
         if answer in('con', 'Con', 'Continue', 'continue'):
+            self.slot1 = 13
+            self.slot1name = 'Copper Pick'
+            self.slot2 = 14
+            self.slot2name = 'Copper Axe'
+            self.slot3 = 15
+            self.slot3name = 'Gathering Knife'
+            self.gold = 100
             self.room = 1
             self.state = "Room"
             party = self.party
@@ -1173,6 +1364,8 @@ class Chat(LineReceiver):
         critical = dexterity / 4
         critical1 = agility / 4
         critical = critical + critical1
+        sneak = agility * 2
+        self.sneak = sneak
         self.speedmod = speedmod
         self.accuracy = accuracy
         self.dodge = dodge
@@ -1191,8 +1384,10 @@ class Chat(LineReceiver):
         manaregen2 = intellegence / 8
         mana = mana + mana2
         manaregen = manaregen + manaregen2
+        spot = intellegence * 2
         mattack = intellegence * 2
         mdefence = wisdom * 2
+        self.spot = spot
         self.mana = mana
         self.maxmana = mana
         self.manaregen = manaregen
@@ -1516,9 +1711,6 @@ class Chat(LineReceiver):
         self.displayPlayers()
         self.displayMobs()
 
-
-
-
     def LocationPrint(self):
         if self.adminmode == True:
             self.sendLine("Region   : %s" % self.regionname)
@@ -1794,6 +1986,43 @@ class Chat(LineReceiver):
                     member.sendLine("(Party)%s :: %s" %(self.name, message))
                     count = count + 1
 
+    def PartyCount(self):
+        party = self.party
+        try:
+            party[0]
+            countmax = 0
+        except:
+            pass
+        try:
+            party[1]
+            countmax = countmax + 1
+        except:
+            pass
+        try:
+            party[2]
+            countmax = countmax + 1
+        except:
+            pass
+        try:
+            party[3]
+            countmax = countmax + 1
+        except:
+            pass
+        try:
+            party[4]
+            countmax = countmax + 1
+        except:
+            pass
+        try:
+            party[5]
+            countmax = countmax + 1
+        except:
+            pass
+        if countmax >= 2:
+            pass
+        else:
+            self.partybool = False
+
     def PartyInvite(self, name):
         party = self.party
         if party == []:
@@ -1811,7 +2040,6 @@ class Chat(LineReceiver):
                     user.state = "PartyResponse"
                     party.append(name)
                     user.party = party
-                    print party
                     self.sendLine("Invite Sent")
             else:
                 self.sendLine("You are not the party leader")
@@ -1862,13 +2090,13 @@ class Chat(LineReceiver):
                 else:
                     member = diction.get(person)
                     member.sendLine("(Party)%s has left the party" %(self.name))
+                    member.PartyCount()
                     count += 1
             member = party[0]
             person = str(member)
             member = diction.get(person)
             memberparty = member.party
             memberparty.remove(self.name)
-            print member.party
             self.party = []
             party = self.party
             party.append(self.name)
@@ -2008,26 +2236,26 @@ class Chat(LineReceiver):
         self.sendLine("Inventory")
         self.sendLine("================================")
         self.sendLine("Gold : %s" % self.gold)
-        self.sendLine("1]   : %s" % self.slot1)
-        self.sendLine("2]   : %s" % self.slot2)
-        self.sendLine("3]   : %s" % self.slot3)
-        self.sendLine("4]   : %s" % self.slot4)
-        self.sendLine("5]   : %s" % self.slot5)
-        self.sendLine("6]   : %s" % self.slot6)
-        self.sendLine("7]   : %s" % self.slot7)
-        self.sendLine("8]   : %s" % self.slot8)
-        self.sendLine("9]   : %s" % self.slot9)
-        self.sendLine("10]  : %s" % self.slot10)
-        self.sendLine("11]  : %s" % self.slot11)
-        self.sendLine("12]  : %s" % self.slot12)
-        self.sendLine("13]  : %s" % self.slot13)
-        self.sendLine("14]  : %s" % self.slot14)
-        self.sendLine("15]  : %s" % self.slot15)
-        self.sendLine("16]  : %s" % self.slot16)
-        self.sendLine("17]  : %s" % self.slot17)
-        self.sendLine("18]  : %s" % self.slot18)
-        self.sendLine("19]  : %s" % self.slot19)
-        self.sendLine("20]  : %s" % self.slot20)
+        self.sendLine("1]  : %s" % self.slot1name)
+        self.sendLine("2]  : %s" % self.slot2name)
+        self.sendLine("3]  : %s" % self.slot3name)
+        self.sendLine("4]  : %s" % self.slot4name)
+        self.sendLine("5]  : %s" % self.slot5name)
+        self.sendLine("6]  : %s" % self.slot6name)
+        self.sendLine("7]  : %s" % self.slot7name)
+        self.sendLine("8]  : %s" % self.slot8name)
+        self.sendLine("9]  : %s" % self.slot9name)
+        self.sendLine("10] : %s" % self.slot10name)
+        self.sendLine("11] : %s" % self.slot11name)
+        self.sendLine("12] : %s" % self.slot12name)
+        self.sendLine("13] : %s" % self.slot13name)
+        self.sendLine("14] : %s" % self.slot14name)
+        self.sendLine("15] : %s" % self.slot15name)
+        self.sendLine("16] : %s" % self.slot16name)
+        self.sendLine("17] : %s" % self.slot17name)
+        self.sendLine("18] : %s" % self.slot18name)
+        self.sendLine("19] : %s" % self.slot19name)
+        self.sendLine("20] : %s" % self.slot20name)
 
     def handle_GETNAME(self, name):
         if self.users.has_key(name):  # lint:ok
@@ -2246,6 +2474,7 @@ class Chat(LineReceiver):
         #125% Defense
         #75% Attack
 
+#{1: self.HeavyHit(), 2: self.doubleHit()}
 #########
 # Rogue #
 #########
@@ -2807,9 +3036,13 @@ class Chat(LineReceiver):
             else :
                 self.sendLine("No party to talk to")
             return
-        if(message[0:1] != '/'):
-            message = message[0:]
-            self.handle_SAY(message)
+        if(message[0:1] == '!'):
+            message = message[1:]
+            self.Shout(message)
+        else:
+            if(message[0:1] != '/'):
+                message = message[0:]
+                self.handle_SAY(message)
 
     def togglePK(self):
         self.pkswitch = False
@@ -3100,6 +3333,7 @@ class Chat(LineReceiver):
                     if(mobhp <= 0): # Mob health < 0 Check
                         self.handle_MOBDEATH(test[0], test[2], target)
                         self.sendLine("You have slain the %s" % (name))
+                        self.handle_TellRoom("%s has slain the %s" % (self.name, name))
                     else:
                         if Critical is True:
                             self.sendLine("You critically hit the %s for %s damage!" % (name, attack))
@@ -3203,6 +3437,7 @@ class Chat(LineReceiver):
                 member1 = party[0]
                 member1 = diction.get(member1)
                 level1 = member1.level
+                countmax = countmax + 1
             except:
                 pass
             try:
@@ -3246,7 +3481,7 @@ class Chat(LineReceiver):
             cr = float(CR)
             expmod = cr / levelmod
             exp = 100 * expmod
-            bonus = countmax * 0.1
+            bonus = countmax * 0.2
             expbonus = exp * bonus
             exp = expbonus + exp
             exp = exp / countmax
@@ -3264,18 +3499,31 @@ class Chat(LineReceiver):
                 count = count + 1
 
     def handle_SAY(self, message):
-        if(message == '/c'):
-            self.state = "CHAT"
-            self.sendLine("You have left chat mode : SAY")
+        if self.adminmode == True:
+            message = "(Admin) %s :: %s" % (self.name, message)
         else:
-            if self.adminmode == True:
-                message = "[Admin] %s :: %s" % (self.name, message)
-            else:
-                message = "%s :: %s" % (self.name, message)
-            print message
-            for name, protocol in self.users.iteritems():
-    #           if protocol != self: #Use this if you don't want messages to be sent to self'  # lint:ok
-                protocol.sendLine(message)
+            message = "%s :: %s" % (self.name, message)
+        print message
+        global userlist
+        diction = userlist
+        for key, value in diction.iteritems():
+            player = diction.get(key)
+            room = player.room
+            if room == self.room:
+                player.sendLine(message)
+
+    def Shout(self, message):
+        if self.adminmode == True:
+            message = "[Global](Admin) %s :: %s" % (self.name, message)
+        else:
+            message = "[Global] %s :: %s" % (self.name, message)
+        print message
+        global userlist
+        diction = userlist
+        for key, value in diction.iteritems():
+            player = diction.get(key)
+            room = player.room
+            player.sendLine(message)
 
     def handle_WHISP_ini(self, name):
         self.whisper = name
@@ -3328,9 +3576,9 @@ class Chat(LineReceiver):
         localhour = int(fetch[2])
         night = bool(fetch[3])
         if night == True:
-            localtime = 'pm'
+            localtime = 'Night-time'
         else:
-            localtime = 'am'
+            localtime = 'Day-time'
         line = 'Arrfia Time : ' + str(localhour) + ':' + str(localmin) + ' ' + localtime
         self.sendLine(line)
 
@@ -4018,7 +4266,6 @@ class DayNight():
         rate = 1
         newmin = currentmin + rate
         if newmin >= 60:
-            print "it has been an hour ingame"
             self.hour += 1
             if self.hour == 6:
                 if self.night == True:
