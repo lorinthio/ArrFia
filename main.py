@@ -144,30 +144,63 @@ class Chat(LineReceiver):
         self.xcoord = 0
         self.ycoord = 0
         self.zcoord = 0
+        self.spelllist = {}
 
         # ADVENTURE SKILLS
         self.Climbing = 1
+        self.Climbingtnl = 100
         self.Swimming = 1
-        self.Spotskill = 1
+        self.Swimmingtnl = 100
         self.Sneakskill = 1
+        self.Sneakskilltnl = 100
 
         # GATHERING SKILLS
         self.Mining = 1
+        self.Miningtnl = 100
         self.Foraging = 1
+        self.Foragingtnl = 100
         self.Logging = 1
+        self.Loggingtnl = 100
 
         # CRAFTING SKILLS
         self.Woodcutting = 1
-        self.Fletching = 1
+        self.Woodcuttingtnl = 100
         self.Stonecutting = 1
+        self.Stonecuttingtnl = 100
         self.Tanning = 1
+        self.Tanningtnl = 100
+        self.Building = 1
+        self.Buildingtnl = 100
 
     def connectionMade(self):
+        self.sendLine("====================================================================")
+        self.sendLine('====================================================================')
+        self.sendLine('        ##                             #     /##                    ')
+        self.sendLine('     /####                            ###   #/ ###   #              ')
+        self.sendLine('    /  ###                            #    ##   ### ###             ')
+        self.sendLine('       /##                                ##        #               ')
+        self.sendLine('      /  ##                               ##                        ')
+        self.sendLine('      /  ##     ###  /###   ###  /###   / ######  ###       /###    ')
+        self.sendLine('     /    ##     ###/ #### / ###/ #### /  #####    ###     / ###  / ')
+        self.sendLine('     /    ##      ##   ###/   ##   ###/   ##        ##    /   ###/  ')
+        self.sendLine('    /      ##     ##          ##          ##        ##   ##    ##   ')
+        self.sendLine('    /########     ##          ##          ##        ##   ##    ##   ')
+        self.sendLine('   /        ##    ##          ##          ##        ##   ##    ##   ')
+        self.sendLine('   #        ##    ##          ##          ##        ##   ##    ##   ')
+        self.sendLine('  /####      ##   ##          ##          ##        ##   ##    /#   ')
+        self.sendLine(' /   ####    ## / ###         ###         ##        ### / ####/ ##  ')
+        self.sendLine('/     ##      #/   ###         ###         ##        ##/   ###   ## ')
+        self.sendLine("====================================================================")
+        self.sendLine('====================================================================')
+        self.sendLine("Successfully connected to Arr'Fia!")
+        self.sendLine("If you don't have a username hit enter to create an account!'")
+        self.sendLine("Otherwise just login as normal")
+        self.sendLine("")
         self.sendLine("Username :")
         self.state = "LOGINCHECK"
 
     def connectionLost(self, leave):
-        self.PartyLeave()
+        self.PartyLeave('Disconnect')
         self.SAVE()
         global c
         room = self.room
@@ -183,7 +216,7 @@ class Chat(LineReceiver):
                     column = "'Slot" + str(count) + "'"
                     c.execute("UPDATE RoomPlayers SET " + column + "=? WHERE ID=?", ('', self.room))
                     conn.commit()
-                    count = count + 1
+                count = count + 1
         if self.users.has_key(self.name):
             message = "%s has disconnected" % (self.name)
             del self.users[self.name]
@@ -202,6 +235,9 @@ class Chat(LineReceiver):
             print self.name, "has no room placing in spawn..."
             self.room = 1
             self.lastroom = 0
+            self.xcoord = 0
+            self.ycoord = 0
+            self.zcoord = 0
             room = self.room
             roomc = (room,)
             c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
@@ -221,17 +257,18 @@ class Chat(LineReceiver):
             conn.commit()
             c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
             test = c.fetchone()
-        if(test != None):
+        else:
             self.room = test[1]
             self.lastroom = self.room
             room = self.room
+            print room
             if (self.room >= 1) and (self.room <= 12):
                 self.regionname = 'Exordior'
             if (self.room >= 13) and (self.room <= 29):
                 self.regionname = 'Cave of Exordior'
             if (self.room >= 30) and (self.room <= 64):
                 self.regionname = 'Exordior Mine'
-            roomc = (room,)
+            roomc = (self.room,)
             c.execute('''SELECT * FROM RoomExits WHERE ID=?''', roomc)
             roomfetch = c.fetchone()
             self.xcoord = int(roomfetch[10])
@@ -260,8 +297,8 @@ class Chat(LineReceiver):
             print self.name, "has no stats, So no character? Placing in creation sequence..."
             self.handle_CLEARSCREEN
             self.sendLine("***WARNING*** Do not leave during this process! it won't take long!")
-            self.CLASSLIST()
-            self.state = "PSTART"
+            self.RACELIST()
+            self.state = "RACESTART"
             return
         if(test != None):
             #Name, Class, Level, Exp, Exptnl, Strength, Constitution, Dexterity, Agility, Wisdom, Intellegence
@@ -412,8 +449,15 @@ class Chat(LineReceiver):
                 c.execute('''UPDATE ID SET ChatInstance=? WHERE Name=?''', (member, name))
                 conn.commit()
                 name = (self.name,)
-                c.execute('''SELECT * FROM ID WHERE Name=?''', name)
+                c.execute('''SELECT * FROM PlayerSkills WHERE Name=?''', name)
                 fetch = c.fetchone()
+                if fetch == None:
+                    print "Skills not found for", self.name
+                else:
+                    self.Climbing = int(fetch[1])
+                    self.Climbingtnl = int(fetch[2])
+                    self.Sneakskill = int(fetch[3])
+                    self.Sneakskilltnl = int(fetch[4])
                 print self.name, "has joined the server"
                 global userlist
                 userlist[self.name] = self
@@ -484,6 +528,30 @@ class Chat(LineReceiver):
         w = self.name
         a = (b, cc, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w)
         c.execute('UPDATE Inventory SET SLOT1=?, SLOT2=?, SLOT3=?, SLOT4=?, SLOT5=?, SLOT6=?, SLOT7=?, SLOT8=?, SLOT9=?, SLOT10=?, SLOT11=?, SLOT12=?, SLOT13=?, SLOT14=?, SLOT15=?, SLOT16=?, SLOT17=?, SLOT18=?, SLOT19=?, SLOT20=?, Gold=? WHERE Name=?', a)
+        # Name, Climblevel, ClimbExp, Sneaklevel, SneakExp, Spotlevel, SpotExp, Swimlevel, SwimExp, Foragelevel, ForageExp, Logginglevel, LoggingExp, Mininglevel, MiningExp, Buildinglevel, BuildingExp, Stonecuttinglevel, StonecuttingExp, Tanninglevel, TanningExp, Woodlevel, Woodexp
+        a = self.name
+        b = self.Climbing
+        cc = self.Climbingtnl
+        d = self.Sneakskill
+        e = self.Sneakskilltnl
+        g = self.Swimming
+        h = self.Swimmingtnl
+        i = self.Foraging
+        j = self.Foragingtnl
+        k = self.Logging
+        l = self.Loggingtnl
+        m = self.Mining
+        n = self.Miningtnl
+        o = self.Building
+        p = self.Buildingtnl
+        q = self.Stonecutting
+        r = self.Stonecuttingtnl
+        s = self.Tanning
+        t = self.Tanningtnl
+        u = self.Woodcutting
+        v = self.Woodcuttingtnl
+        skills = (b, cc, d, e, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, a)
+        c.execute('UPDATE PlayerSkills SET Climblevel=?, ClimbExp=?, Sneaklevel=?, SneakExp=?, Swimlevel=?, SwimExp=?, Foragelevel=?, ForageExp=?, Logginglevel=?, LoggingExp=?, Mininglevel=?, MiningExp=?, Buildinglevel=?, BuildingExp=?, Stonecuttinglevel=?, StonecuttingExp=?, Tanninglevel=?, TanningExp=?, Woodlevel=?, Woodexp=? WHERE Name=?', skills)
         self.sendLine('Save Successful!')
         conn.commit()
 
@@ -543,7 +611,6 @@ class Chat(LineReceiver):
         v = self.gold
         w = self.name
         a = (w, b, cc, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v)
-        print a
         c.execute('INSERT INTO Inventory VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', a)
         b = self.health
         cc = self.mana
@@ -551,6 +618,30 @@ class Chat(LineReceiver):
         a = (d, b, cc, 10)
         # try:
         c.execute('INSERT INTO Vitals VALUES (?,?,?,?)', a)
+        # Name, Climblevel, ClimbExp, Sneaklevel, SneakExp, Spotlevel, SpotExp, Swimlevel, SwimExp, Foragelevel, ForageExp, Logginglevel, LoggingExp, Mininglevel, MiningExp, Buildinglevel, BuildingExp, Stonecuttinglevel, StonecuttingExp, Tanninglevel, TanningExp, Woodlevel, Woodexp
+        a = self.name
+        b = self.Climbing
+        cc = self.Climbingtnl
+        d = self.Sneakskill
+        e = self.Sneakskilltnl
+        g = self.Swimming
+        h = self.Swimmingtnl
+        i = self.Foraging
+        j = self.Foragingtnl
+        k = self.Logging
+        l = self.Loggingtnl
+        m = self.Mining
+        n = self.Miningtnl
+        o = self.Building
+        p = self.Buildingtnl
+        q = self.Stonecutting
+        r = self.Stonecuttingtnl
+        s = self.Tanning
+        t = self.Tanningtnl
+        u = self.Woodcutting
+        v = self.Woodcuttingtnl
+        skills = (a, b, cc, d, e, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v)
+        c.execute('INSERT INTO PlayerSkills VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', skills)
         self.sendLine('Creation Successful!')
         conn.commit()
 
@@ -631,7 +722,7 @@ class Chat(LineReceiver):
             return
         if(self.state == 'DEAD'):
             self.LOOK()
-            self.state = "Chat"
+            self.state = "CHAT"
             return
 
 #CREATION SEQUENCE
@@ -990,7 +1081,7 @@ class Chat(LineReceiver):
             self.sendLine("    *Accurate and deadly strikes")
             self.sendLine("- Paladin        Level 30, 25Str, 35Con, 30Dex, 25Wis")
             self.sendLine("    *Tank focus with healing abilities")
-            self.sendLine("- Chaos Knight   Level 30, 35Str, 30Con, 35Dex, 25Int")
+            self.sendLine("- Chaos Knight   Level 30, 35Str, 25Con, 30Dex, 25Int")
             self.sendLine("    *A strong fighter utilizing dark arts")
             self.MakeWarrior()
             self.INFO2()
@@ -1192,10 +1283,21 @@ class Chat(LineReceiver):
             self.slot3name = 'Gathering Knife'
             self.gold = 100
             self.room = 1
+            #if self.classname = 'Warrior':
+            #    self.spelllist = {1: self.HeavyHit, 2: self.doubleHit, 3: self.taunt, 4: self.offensiveStance}
+            #if self.classname = 'Rogue':
+            #    self.spelllist = {1: self.doubleStrike, 2: self.dirtyStrike, 3: self.tripleStrike}
+            #if self.classname = 'Priest':
             self.state = "Room"
             party = self.party
             party.append(self.name)
             self.handle_CLEARSCREEN()
+            global userlist
+            diction = userlist
+            for key, value in diction.iteritems():
+                player = diction.get(key)
+                message ="%s has joined the world of Arr'Fia" % self.name
+                player.sendLine(message)
             self.sendLine("Welcome %s to the world of Arr'Fia" % (self.name))
             self.FIRSTSAVE()
             self.EQUIPSTART()
@@ -1323,7 +1425,7 @@ class Chat(LineReceiver):
         strength = self.strength
         constitution = self.constitution
         if self.classname in('Warrior', 'Priest', 'Berserker', 'Paladin', 'Chaos Knight', 'Blademaster', 'Templar'):
-            health = strength * 2
+            health = strength * 1.75
             health2 = constitution * 2
             health = int(health)
             health2 = int(health2)
@@ -2044,9 +2146,12 @@ class Chat(LineReceiver):
             else:
                 self.sendLine("You are not the party leader")
 
-    def PartyLeave(self):
+    def PartyLeave(self, reason=''):
         if self.partybool is False:
-            self.sendLine('No party to leave')
+            if reason == 'Disconnect':
+                pass
+            else:
+                self.sendLine('No party to leave')
         else:
             party = self.party
             try:
@@ -2082,7 +2187,10 @@ class Chat(LineReceiver):
             global userlist
             diction = userlist
             count = 0
+            if countmax == 0:
+                return
             while count <= countmax:
+                print "Stuck here"
                 member = party[count]
                 person = str(member)
                 if person == self.name:
@@ -2315,15 +2423,19 @@ class Chat(LineReceiver):
             player.sendLine(line)
             player.sendLine("Please get somewhere safe...")
         print "SERVER called to stop by...", self.name
-        reactor.callLater(30.0, self.StopAll)
+        reactor.callLater(3.0, self.StopAll)
 
     def StopAll(self):
-        global userlist
-        diction = userlist
-        for key, value in diction.iteritems():
-            player = diction.get(key)
-            player.EXIT()
-        reactor.callLater(3.0, StopAll)
+        try:
+            global userlist
+            diction = userlist
+            for key, value in diction.iteritems():
+                player = diction.get(key)
+                print player
+                player.EXIT()
+            reactor.callLater(3.0, StopAll)
+        except:
+            print "Something in StopAll went wrong..."
 
 ##########################
 ##                      ##
@@ -2371,7 +2483,7 @@ class Chat(LineReceiver):
 ###########
 # Warrior #
 ###########
-
+############### WARRIOR ####################
     def HeavyHit(self, target): #level 1, 10MP
         if self.heavyhit is False:
             self.sendLine("Heavy Hit not ready")
@@ -2474,11 +2586,11 @@ class Chat(LineReceiver):
         #125% Defense
         #75% Attack
 
-#{1: self.HeavyHit(), 2: self.doubleHit()}
 #########
 # Rogue #
 #########
 
+############### ROGUE ####################
     def doubleStrike(self, target): #level 1, 8MP
         if self.doubleStrike is False:
             self.sendLine("Double Strike not ready")
@@ -2582,7 +2694,7 @@ class Chat(LineReceiver):
 ##########
 # Priest #
 ##########
-
+############### PRIEST ####################
     def lightSleep(self, value, target):
         global c
         print "will work on later"
@@ -2689,7 +2801,7 @@ class Chat(LineReceiver):
 ########
 # Mage #
 ########
-
+############### MAGICIAN ####################
     def fireball(self, target): #level 1, 8MP
         if self.heavyhit is False:
             self.sendLine("Fireball not ready")
@@ -2845,10 +2957,10 @@ class Chat(LineReceiver):
             if self.adminmode == False:
                 self.sendLine("The commands available to you are...")
                 self.sendLine("/a <#>               *Attack the mob assigned to that slot")
-                self.sendLine("/c                   *Return back to command mode")
+                # self.sendLine("/c                   *Return back to command mode")
                 self.sendLine("/changepass          *Changes your password")
                 self.sendLine("/clear               *clears the screen of text")
-                self.sendLine("/equip               *Looks up personal gear equipped")
+                self.sendLine("/equipped            *Looks up personal gear equipped")
                 self.sendLine("/exit                *exit cleanly and save properly")
                 self.sendLine("/inv                 *Opens your inventory")
                 self.sendLine("/look                *Looks around your area")
@@ -2856,20 +2968,18 @@ class Chat(LineReceiver):
                 self.sendLine("/pa <user>           *Attack a player")
                 self.sendLine('/party invite <user> *Invites user to your party')
                 self.sendLine("/pk                  *Toggles Player fighting on/off (5min wait)")
-                self.sendLine('/pos                 *Displays your current region and position')
-                self.sendLine("/s                   *Locks say chat mode. (use /c to return)")
-                self.sendLine("/say <message>       *Talks to other users")
+                self.sendLine("/skills              *Shows your characters skills")
                 self.sendLine("/spawn               *Return to spawn immeadiately (30min cooldown)")
                 self.sendLine("/stats               *Looks up your own stats")
-                self.sendLine("/suicide             *Commits suicide")
+                self.sendLine("/time                *Displays current Arr'Fia time")
                 self.sendLine("/w <user>            *Enter private chat mode")
             if self.adminmode == True:
                 self.sendLine("The commands available to you are...")
                 self.sendLine("/a <#>               *Attack the mob assigned to that slot")
-                self.sendLine("/c                   *Return back to command mode")
+                # self.sendLine("/c                   *Return back to command mode")
                 self.sendLine("/changepass          *Changes your password")
                 self.sendLine("/clear               *clears the screen of text")
-                self.sendLine("/equip               *Looks up personal gear equipped")
+                self.sendLine("/equipped            *Looks up personal gear equipped")
                 self.sendLine("/exit                *exit cleanly and save properly")
                 self.sendLine("/inv                 *Opens your inventory")
                 self.sendLine("/look                *Looks around your area")
@@ -2877,13 +2987,11 @@ class Chat(LineReceiver):
                 self.sendLine("/pa <user>           *Attack a player")
                 self.sendLine('/party invite <user> *Invites user to your party')
                 self.sendLine("/pk                  *Toggles Player fighting on/off (5min wait)")
-                self.sendLine('/pos                 *Displays your current region and position')
-                self.sendLine("/s                   *Locks say chat mode. (use /c to return)")
-                self.sendLine("/say <message>       *Talks to other users")
+                self.sendLine("/skills              *Shows your characters skills")
                 self.sendLine("/spawn               *Return to spawn immeadiately (30min cooldown)")
-                self.sendLine("/stop                *Kicks everyone off the server then stops it")
+                self.sendLine("/stop <reason>       *Kicks everyone off the server then stops it")
                 self.sendLine("/stats               *Looks up your own stats")
-                self.sendLine("/suicide             *Commits suicide")
+                self.sendLine("/time                *Displays current Arr'Fia time")
                 self.sendLine("/tp <user or room>   *Teleports you to a player or roomID")
                 self.sendLine("/w <user>            *Enter private chat mode")
             return
@@ -2898,6 +3006,9 @@ class Chat(LineReceiver):
             return
         if(message == '/inv'):
             self.INVENTORY()
+            return
+        if(message == '/skills'):
+            self.Skilllist()
             return
         if(message == '/stats'):
             self.STATS()
@@ -2951,7 +3062,7 @@ class Chat(LineReceiver):
         if(message == '/levelup'):
             self.LevelUP()
             return
-        if(message == '/equip'):
+        if(message == '/equipped'):
             self.handle_EQUIP()
             return
         if(message[0:6] == '/admin'):
@@ -3068,7 +3179,6 @@ class Chat(LineReceiver):
 
     def CCCHECK2(self, answer):
         if answer in('con', 'Con', 'Continue', 'continue'):
-            self.level = self.level + 1
             self.sendLine("You have successfully leveled up to level %s!" % (self.level))
             curexptnl = self.exptnl
             nextexptnl = self.level * 1000
@@ -3076,6 +3186,7 @@ class Chat(LineReceiver):
             self.state = "CHAT"
         if answer in('q', 'Q', 'quit', 'Quit'):
             self.sendLine("Returned to previous attributes")
+            self.level = self.level - 1
             t = (self.name,)
             c.execute('SELECT * FROM Character WHERE Name=?', t)
             test = c.fetchone()
@@ -3093,11 +3204,15 @@ class Chat(LineReceiver):
 
     def LevelUP(self):
         if self.exptnl <= 0:
+            self.level += 1
             self.StatCreation()
             self.STATS()
             self.sendLine("Pick a stat to add a point into...")
             self.sendLine("Choices : Str, Con, Dex, Agi, Wis, Int")
-            self.attributepoints = 2
+            if self.level in(5, 10, 15, 20, 25, 30):
+                self.attributepoints = 2
+            else:
+                self.attributepoints = 1
             self.sendLine("%s points remaining" % self.attributepoints)
             self.state = "AddPoints2"
         else:
@@ -3212,13 +3327,16 @@ class Chat(LineReceiver):
             self.sendLine("You cannot suicide for a while still")
 
     def handle_PLAYERATTACK(self, target):
+        if self.pk == False:
+            self.sendLine("You are not in pk mode... cannot attack")
+            return
         global userlist
         diction = userlist
         target = str(target)
         atk = diction.get(target)
         #diction = self.users
         if target == self.name:
-            self.sendLine("You cannot attack yourself... Do you want /suicide?")
+            self.sendLine("You cannot attack yourself...")
             return
         #target = str(target)
         #atk = diction.get(target)
@@ -3437,7 +3555,6 @@ class Chat(LineReceiver):
                 member1 = party[0]
                 member1 = diction.get(member1)
                 level1 = member1.level
-                countmax = countmax + 1
             except:
                 pass
             try:
@@ -3493,9 +3610,9 @@ class Chat(LineReceiver):
                 curexp = member.exp
                 curexp = exp + curexp
                 member.exp = curexp
-                member.exptnl = self.exptnl - exp
+                member.exptnl = member.exptnl - exp
                 member.sendLine("You gained %s from a party kill." % (exp))
-                member.sendLine("You need %s more to next level." % (self.exptnl))
+                member.sendLine("You need %s more to next level." % (member.exptnl))
                 count = count + 1
 
     def handle_SAY(self, message):
@@ -3568,6 +3685,26 @@ class Chat(LineReceiver):
         reactor.callLater(600.0, self.SpawnReset)
         pass
 
+    def Cast(self, skill, target):
+        pass
+
+    def Skilllist(self):
+        self.sendLine("Adventure Skills    Level      Exp needed")
+        self.sendLine("Climbing              %3s           %5s" % (self.Climbing, self.Climbingtnl))
+        self.sendLine("Sneak                 %3s           %5s" % (self.Sneakskill, self.Sneakskilltnl))
+        self.sendLine("Swimming              %3s           %5s" % (self.Swimming, self.Swimmingtnl))
+        self.sendLine("")
+        self.sendLine("Gathering Skills")
+        self.sendLine("Foraging              %3s           %5s" % (self.Foraging, self.Foragingtnl))
+        self.sendLine("Logging               %3s           %5s" % (self.Logging, self.Loggingtnl))
+        self.sendLine("Mining                %3s           %5s" % (self.Mining, self.Miningtnl))
+        self.sendLine("")
+        self.sendLine("Crafting Skills")
+        self.sendLine("Building              %3s           %5s" % (self.Building, self.Buildingtnl))
+        self.sendLine("Stonecutting          %3s           %5s" % (self.Stonecutting, self.Stonecuttingtnl))
+        self.sendLine("Tanning               %3s           %5s" % (self.Tanning, self.Tanningtnl))
+        self.sendLine("Woodcutting           %3s           %5s" % (self.Woodcutting, self.Woodcuttingtnl))
+
     def Time(self):
         global c
         c.execute('''SELECT * From ServerTime''')
@@ -3598,7 +3735,6 @@ class Chat(LineReceiver):
         self.restready = False
         self.sendLine("You rest for a while, and you vitals are now maxed")
 
-
     def handle_WHISPER(self, message1):
         try:
             if(message1 == '/c'):
@@ -3619,12 +3755,6 @@ class Chat(LineReceiver):
         except:
             print "Whisper failed by", self.name
             self.sendLine("Whisper failed, please type /c and try again")
-
-#    def ExperienceReward(self):
-#        global c
-#        atk.
-#        c.execute('''SELECT * from ActiveMonster WHERE RandomID=?''', ):
-#        modifier = atk.
 
     def threatCalculator(self, damage, RandomID):
         found = False
@@ -3707,6 +3837,7 @@ class MobSpawner():
     def __init__(self):
         global c
 
+        self.spawnedregions = 'Spawned in... '
         # ExordiorCave
         self.MobMax = 15
         self.SpawnRate = 5
@@ -3762,6 +3893,10 @@ class MobSpawner():
         self.mdefence = 0
         self.critical = 0
         self.name = ''
+        if self.spawnedregions == 'Spawned in... ':
+            pass
+        else:
+            print self.spawnedregions
 
     def StatCreation(self, strength, constitution, dexterity, agility, wisdom, intellegence):
         health = strength * 2
@@ -3835,7 +3970,7 @@ class MobSpawner():
         spawn = self.SpawnRate
         if mobcount >= self.MobMax:
             return
-        print "Spawning in", self.regionname
+        self.spawnedregions = self.spawnedregions + self.regionname + ', '
         while spawn > 0:
             region = self.regionname
             regionname = (region,)
@@ -4055,8 +4190,11 @@ class MobFight():
                         diction = userlist
                         target = str(teststr)
                         target = diction.get(target)
+                        health = target.health
                         line = "%s hit you with a %s for %s damage!" % (name, attack, damage)
                         count = count + 1
+                        target.sendLine(line)
+                        line = "Health : %s" % health
                         target.sendLine(line)
                     else:
                         diction = userlist
@@ -4104,8 +4242,12 @@ class MobFight():
         # Kills player and sends back to spawn
         target = target
         name = target.name
+        mobname = str(self.name)
         target.room = 0
         target.state = "DEAD"
+        line = "You were killed by %s. You were sent back to your most recent checkpoint..." % (mobname)
+        target.sendLine(line)
+        target.sendLine("Hit enter to respawn")
         target.health = target.maxhealth
         target.mana = target.maxmana
         self.updateRoom(target)
@@ -4120,9 +4262,9 @@ class MobFight():
         var5 = str(fetch[9])
         var6 = str(fetch[11])
         count = 1
-        target = {1: var1, 2: var2, 3: var3, 4: var4, 5: var5, 6: var6}
+        targets = {1: var1, 2: var2, 3: var3, 4: var4, 5: var5, 6: var6}
         while count <= 6:
-            name = target[count]
+            name = targets[count]
             if name == target.name:
                 count2 = count
                 count = 7
@@ -4174,7 +4316,8 @@ class MobFight():
                 column = "'Slot" + str(target.placement) + "'"
                 c.execute("UPDATE RoomPlayers SET " + column + "=? WHERE ID=?", ('', self.room))
                 conn.commit()
-                c.execute('''SELECT * FROM RoomPlayers where ID=?''', roomc)
+                room = 1
+                c.execute('''SELECT * FROM RoomPlayers where ID=?''', (room,))
                 test = c.fetchone()
                 count = 1
                 while(count <= 20):
@@ -4347,10 +4490,7 @@ def EmptyRooms():
         count10 += 1
 
 print "Closed!"
-
 EmptyRooms()
-
-print "Rooms empty!"
 conn.commit()
 c.close()
 print "Hit enter to close the window"

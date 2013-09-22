@@ -24,7 +24,8 @@ c.execute('''CREATE TABLE MonsterThreat (RandomID, Player1, Threat1, Player2, Th
 c.execute('''CREATE TABLE Gear (ID, Name, Slot, MinValue, MaxValue, Attackspeed)''')
 c.execute('''CREATE TABLE RoomUpDown (ID, Up, Down)''')
 c.execute('''CREATE TABLE ServerTime (Server, Minutes, Hours, Night)''')
-c.execute('''CREATE TABLE ClassSkills (Class, Skilldictionary)''')
+c.execute('''CREATE TABLE ClassSkills (Class, Skillname, Level)''')
+c.execute('''CREATE TABLE PlayerSkills (Name, Climblevel, ClimbExp, Sneaklevel, SneakExp, Swimlevel, SwimExp, Foragelevel, ForageExp, Logginglevel, LoggingExp, Mininglevel, MiningExp, Buildinglevel, BuildingExp, Stonecuttinglevel, StonecuttingExp, Tanninglevel, TanningExp, Woodlevel, Woodexp)''')
 conn.commit()
 
 #skills = [('Warrior', '{1: }')
