@@ -2,6 +2,9 @@ from twisted.internet.protocol import Factory
 from twisted.protocols.basic import LineReceiver
 from twisted.internet import reactor
 from twisted.internet import task
+import sys
+sys.path.insert(0, 'C:\Users\Ben\Downloads\DatabaseInformation')
+import Databasecreate
 import random
 import sqlite3
 import string
@@ -12,6 +15,11 @@ global userlist
 
 conn = sqlite3.connect('MUD.db')
 c = conn.cursor()
+try:
+    c.execute("Select * From ServerTime")
+except:
+    print "No Database... Creating one"
+    Databasecreate.Create()
 userlist = {}
 
 def StopAll():
@@ -172,6 +180,27 @@ class Chat(LineReceiver):
         self.Building = 1
         self.Buildingtnl = 100
 
+        # Admin Room Creation Slots
+        self.createroomid = ''
+        self.createroomdescrip = ''
+        self.createroomdescripN = ''
+        self.createroomdescripE = ''
+        self.createroomdescripS = ''
+        self.createroomdescripW = ''
+        self.createroomidN = ''
+        self.createroomidNsql = ''
+        self.createroomidE = ''
+        self.createroomidEsql = ''
+        self.createroomidS = ''
+        self.createroomidSsql = ''
+        self.createroomidW = ''
+        self.createroomidWsql = ''
+        self.createroomcoordx = ''
+        self.createroomcoordy = ''
+        self.createroomcoordz = ''
+        self.createroomup = ''
+        self.createroomdown = ''
+
     def connectionMade(self):
         self.sendLine("====================================================================")
         self.sendLine('====================================================================')
@@ -226,424 +255,430 @@ class Chat(LineReceiver):
 
 # LOAD / SAVE SCRIPTS
     def LOAD(self):
-        global c
-        t = str(self.name)
-        t = (t,)
-        c.execute('SELECT * FROM Placement WHERE Name=?', t)
-        test = c.fetchone()
-        if(test == None):
-            print self.name, "has no room placing in spawn..."
-            self.room = 1
-            self.lastroom = 0
-            self.xcoord = 0
-            self.ycoord = 0
-            self.zcoord = 0
-            room = self.room
-            roomc = (room,)
-            c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
-            test = c.fetchone()
-            count = 1
-            while count <= 20:
-                if test[count] not in('', None, 'None'):
-                    count = count + 1
-                else:
-                    column = "'Slot" + str(count) + "'"
-                    c.execute("UPDATE RoomPlayers SET " + column + "=? WHERE ID=?", (self.name, room))
-                    self.lastroom = room
-                    self.placement = count
-                    self.room = room
-                    conn.commit()
-                    count = 30
-            conn.commit()
-            c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
-            test = c.fetchone()
-        else:
-            self.room = test[1]
-            self.lastroom = self.room
-            room = self.room
-            print room
-            if (self.room >= 1) and (self.room <= 12):
-                self.regionname = 'Exordior'
-            if (self.room >= 13) and (self.room <= 29):
-                self.regionname = 'Cave of Exordior'
-            if (self.room >= 30) and (self.room <= 64):
-                self.regionname = 'Exordior Mine'
-            roomc = (self.room,)
-            c.execute('''SELECT * FROM RoomExits WHERE ID=?''', roomc)
-            roomfetch = c.fetchone()
-            self.xcoord = int(roomfetch[10])
-            self.ycoord = int(roomfetch[11])
-            self.zcoord = int(roomfetch[12])
-            c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
-            test = c.fetchone()
-            count = 1
-            while count <= 20:
-                if test[count] not in('', None, 'None'):
-                    count = count + 1
-                else:
-                    column = "'Slot" + str(count) + "'"
-                    c.execute("UPDATE RoomPlayers SET " + column + "=? WHERE ID=?", (self.name, room))
-                    self.lastroom = room
-                    self.placement = count
-                    self.room = room
-                    conn.commit()
-                    count = 30
-            conn.commit()
-            c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
-            test = c.fetchone()
-        c.execute('SELECT * FROM Character WHERE Name=?', t)
-        test = c.fetchone()
-        if(test == None):
-            print self.name, "has no stats, So no character? Placing in creation sequence..."
-            self.handle_CLEARSCREEN
-            self.sendLine("***WARNING*** Do not leave during this process! it won't take long!")
-            self.RACELIST()
-            self.state = "RACESTART"
-            return
-        if(test != None):
-            #Name, Class, Level, Exp, Exptnl, Strength, Constitution, Dexterity, Agility, Wisdom, Intellegence
-            self.classname = str(test[1])
-            self.level = test[2]
-            self.exp = test[3]
-            self.exptnl = test[4]
-            self.strength = test[5]
-            self.constitution = test[6]
-            self.dexterity = test[7]
-            self.agility = test[8]
-            self.wisdom = test[9]
-            self.intellegence = test[10]
-            self.race = str(test[11])
-            self.StatCreation()
-            c.execute('SELECT * FROM Vitals WHERE Name=?', t)
+        try:
+            global c
+            t = str(self.name)
+            t = (t,)
+            c.execute('SELECT * FROM Placement WHERE Name=?', t)
             test = c.fetchone()
             if(test == None):
-                print self.name, "has no vitals saved, setting to max vitals"
-                self.health = self.maxhealth
-                self.mana = self.maxmana
+                print self.name, "has no room placing in spawn..."
+                self.room = 1
+                self.lastroom = 0
+                self.xcoord = 0
+                self.ycoord = 0
+                self.zcoord = 0
+                room = self.room
+                roomc = (room,)
+                c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
+                test = c.fetchone()
+                count = 1
+                while count <= 20:
+                    if test[count] not in('', None, 'None'):
+                        count = count + 1
+                    else:
+                        column = "'Slot" + str(count) + "'"
+                        c.execute("UPDATE RoomPlayers SET " + column + "=? WHERE ID=?", (self.name, room))
+                        self.lastroom = room
+                        self.placement = count
+                        self.room = room
+                        conn.commit()
+                        count = 30
+                conn.commit()
+                c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
+                test = c.fetchone()
+            else:
+                self.room = test[1]
+                self.lastroom = self.room
+                room = self.room
+                if (self.room >= 1) and (self.room <= 12):
+                    self.regionname = 'Exordior'
+                if (self.room >= 13) and (self.room <= 29):
+                    self.regionname = 'Cave of Exordior'
+                if (self.room >= 30) and (self.room <= 64):
+                    self.regionname = 'Exordior Mine'
+                roomc = (self.room,)
+                c.execute('''SELECT * FROM RoomExits WHERE ID=?''', roomc)
+                roomfetch = c.fetchone()
+                self.xcoord = int(roomfetch[10])
+                self.ycoord = int(roomfetch[11])
+                self.zcoord = int(roomfetch[12])
+                c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
+                test = c.fetchone()
+                count = 1
+                while count <= 20:
+                    if test[count] not in('', None, 'None'):
+                        count = count + 1
+                    else:
+                        column = "'Slot" + str(count) + "'"
+                        c.execute("UPDATE RoomPlayers SET " + column + "=? WHERE ID=?", (self.name, room))
+                        self.lastroom = room
+                        self.placement = count
+                        self.room = room
+                        conn.commit()
+                        count = 30
+                conn.commit()
+                c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
+                test = c.fetchone()
+            c.execute('SELECT * FROM Character WHERE Name=?', t)
+            test = c.fetchone()
+            if(test == None):
+                print self.name, "has no stats, So no character? Placing in creation sequence..."
+                self.handle_CLEARSCREEN
+                self.sendLine("***WARNING*** Do not leave during this process! it won't take long!")
+                self.RACELIST()
+                self.state = "RACESTART"
+                return
             if(test != None):
-                self.health = test[1]
-                self.mana = test[2]
-                self.sendLine("Character Successfully Loaded")
-                c.execute('SELECT * FROM Equipment WHERE Name=?', t)
+                #Name, Class, Level, Exp, Exptnl, Strength, Constitution, Dexterity, Agility, Wisdom, Intellegence
+                self.classname = str(test[1])
+                self.level = test[2]
+                self.exp = test[3]
+                self.exptnl = test[4]
+                self.strength = test[5]
+                self.constitution = test[6]
+                self.dexterity = test[7]
+                self.agility = test[8]
+                self.wisdom = test[9]
+                self.intellegence = test[10]
+                self.race = str(test[11])
+                self.StatCreation()
+                c.execute('SELECT * FROM Vitals WHERE Name=?', t)
                 test = c.fetchone()
                 if(test == None):
-                    print self.name, "has no equipment!"
+                    print self.name, "has no vitals saved, setting to max vitals"
+                    self.health = self.maxhealth
+                    self.mana = self.maxmana
                 if(test != None):
-                    self.mainhandid = test[1]
-                    self.offhandid = test[2]
-                    self.helmetid = test[3]
-                    self.bodyid = test[4]
-                    self.lowerbodyid = test[5]
-                    self.bootsid = test[6]
-                    self.EQUIPSTART()
-                    c.execute('SELECT * FROM Inventory WHERE Name=?', t)
+                    self.health = test[1]
+                    self.mana = test[2]
+                    self.sendLine("Character Successfully Loaded")
+                    c.execute('SELECT * FROM Equipment WHERE Name=?', t)
                     test = c.fetchone()
                     if(test == None):
-                        print self.name, "has no inventory!"
+                        print self.name, "has no equipment!"
                     if(test != None):
-                        self.slot1 = int(test[1])
-                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot1,))
-                        fetch = c.fetchone()
-                        if fetch != None:
-                            self.slot1name = str(fetch[1])
-                        self.slot2 = int(test[2])
-                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot2,))
-                        fetch = c.fetchone()
-                        if fetch != None:
-                            self.slot2name = str(fetch[1])
-                        self.slot3 = int(test[3])
-                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot3,))
-                        fetch = c.fetchone()
-                        if fetch != None:
-                            self.slot3name = str(fetch[1])
-                        self.slot4 = int(test[4])
-                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot4,))
-                        fetch = c.fetchone()
-                        if fetch != None:
-                            self.slot4name = str(fetch[1])
-                        self.slot5 = int(test[5])
-                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot5,))
-                        fetch = c.fetchone()
-                        if fetch != None:
-                            self.slot5name = str(fetch[1])
-                        self.slot6 = int(test[6])
-                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot6,))
-                        fetch = c.fetchone()
-                        if fetch != None:
-                            self.slot6name = str(fetch[1])
-                        self.slot7 = int(test[7])
-                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot7,))
-                        fetch = c.fetchone()
-                        if fetch != None:
-                            self.slot7name = str(fetch[1])
-                        self.slot8 = int(test[8])
-                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot8,))
-                        fetch = c.fetchone()
-                        if fetch != None:
-                            self.slot8name = str(fetch[1])
-                        self.slot9 = int(test[9])
-                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot9,))
-                        fetch = c.fetchone()
-                        if fetch != None:
-                            self.slot9name = str(fetch[1])
-                        self.slot10 = int(test[10])
-                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot10,))
-                        fetch = c.fetchone()
-                        if fetch != None:
-                            self.slot10name = str(fetch[1])
-                        self.slot11 = int(test[11])
-                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot11,))
-                        fetch = c.fetchone()
-                        if fetch != None:
-                            self.slot11name = str(fetch[1])
-                        self.slot12 = int(test[12])
-                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot12,))
-                        fetch = c.fetchone()
-                        if fetch != None:
-                            self.slot12name = str(fetch[1])
-                        self.slot13 = int(test[13])
-                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot13,))
-                        fetch = c.fetchone()
-                        if fetch != None:
-                            self.slot13name = str(fetch[1])
-                        self.slot14 = int(test[14])
-                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot14,))
-                        fetch = c.fetchone()
-                        if fetch != None:
-                            self.slot14name = str(fetch[1])
-                        self.slot15 = int(test[15])
-                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot15,))
-                        fetch = c.fetchone()
-                        if fetch != None:
-                            self.slot15name = str(fetch[1])
-                        self.slot16 = int(test[16])
-                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot16,))
-                        fetch = c.fetchone()
-                        if fetch != None:
-                            self.slot16name = str(fetch[1])
-                        self.slot17 = int(test[17])
-                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot17,))
-                        fetch = c.fetchone()
-                        if fetch != None:
-                            self.slot17name = str(fetch[1])
-                        self.slot18 = int(test[18])
-                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot18,))
-                        fetch = c.fetchone()
-                        if fetch != None:
-                            self.slot18name = str(fetch[1])
-                        self.slot19 = int(test[19])
-                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot19,))
-                        fetch = c.fetchone()
-                        if fetch != None:
-                            self.slot19name = str(fetch[1])
-                        self.slot20 = int(test[20])
-                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot20,))
-                        fetch = c.fetchone()
-                        if fetch != None:
-                            self.slot20name = str(fetch[1])
-                        self.gold = test[21]
-                party = self.party
-                party.append(self.name)
-                member = str(self)
-                name = unicode(self.name)
-                c.execute('''UPDATE ID SET ChatInstance=? WHERE Name=?''', (member, name))
-                conn.commit()
-                name = (self.name,)
-                c.execute('''SELECT * FROM PlayerSkills WHERE Name=?''', name)
-                fetch = c.fetchone()
-                if fetch == None:
-                    print "Skills not found for", self.name
-                else:
-                    self.Climbing = int(fetch[1])
-                    self.Climbingtnl = int(fetch[2])
-                    self.Sneakskill = int(fetch[3])
-                    self.Sneakskilltnl = int(fetch[4])
-                print self.name, "has joined the server"
-                global userlist
-                userlist[self.name] = self
-                self.handle_WELCOME()
-
-                # Name, Mainhand, Offhand, Helmet, Body, Lowerbody, Boots
+                        self.mainhandid = test[1]
+                        self.offhandid = test[2]
+                        self.helmetid = test[3]
+                        self.bodyid = test[4]
+                        self.lowerbodyid = test[5]
+                        self.bootsid = test[6]
+                        self.EQUIPSTART()
+                        c.execute('SELECT * FROM Inventory WHERE Name=?', t)
+                        test = c.fetchone()
+                        if(test == None):
+                            print self.name, "has no inventory!"
+                        if(test != None):
+                            self.slot1 = int(test[1])
+                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot1,))
+                            fetch = c.fetchone()
+                            if fetch != None:
+                                self.slot1name = str(fetch[1])
+                            self.slot2 = int(test[2])
+                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot2,))
+                            fetch = c.fetchone()
+                            if fetch != None:
+                                self.slot2name = str(fetch[1])
+                            self.slot3 = int(test[3])
+                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot3,))
+                            fetch = c.fetchone()
+                            if fetch != None:
+                                self.slot3name = str(fetch[1])
+                            self.slot4 = int(test[4])
+                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot4,))
+                            fetch = c.fetchone()
+                            if fetch != None:
+                                self.slot4name = str(fetch[1])
+                            self.slot5 = int(test[5])
+                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot5,))
+                            fetch = c.fetchone()
+                            if fetch != None:
+                                self.slot5name = str(fetch[1])
+                            self.slot6 = int(test[6])
+                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot6,))
+                            fetch = c.fetchone()
+                            if fetch != None:
+                                self.slot6name = str(fetch[1])
+                            self.slot7 = int(test[7])
+                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot7,))
+                            fetch = c.fetchone()
+                            if fetch != None:
+                                self.slot7name = str(fetch[1])
+                            self.slot8 = int(test[8])
+                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot8,))
+                            fetch = c.fetchone()
+                            if fetch != None:
+                                self.slot8name = str(fetch[1])
+                            self.slot9 = int(test[9])
+                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot9,))
+                            fetch = c.fetchone()
+                            if fetch != None:
+                                self.slot9name = str(fetch[1])
+                            self.slot10 = int(test[10])
+                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot10,))
+                            fetch = c.fetchone()
+                            if fetch != None:
+                                self.slot10name = str(fetch[1])
+                            self.slot11 = int(test[11])
+                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot11,))
+                            fetch = c.fetchone()
+                            if fetch != None:
+                                self.slot11name = str(fetch[1])
+                            self.slot12 = int(test[12])
+                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot12,))
+                            fetch = c.fetchone()
+                            if fetch != None:
+                                self.slot12name = str(fetch[1])
+                            self.slot13 = int(test[13])
+                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot13,))
+                            fetch = c.fetchone()
+                            if fetch != None:
+                                self.slot13name = str(fetch[1])
+                            self.slot14 = int(test[14])
+                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot14,))
+                            fetch = c.fetchone()
+                            if fetch != None:
+                                self.slot14name = str(fetch[1])
+                            self.slot15 = int(test[15])
+                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot15,))
+                            fetch = c.fetchone()
+                            if fetch != None:
+                                self.slot15name = str(fetch[1])
+                            self.slot16 = int(test[16])
+                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot16,))
+                            fetch = c.fetchone()
+                            if fetch != None:
+                                self.slot16name = str(fetch[1])
+                            self.slot17 = int(test[17])
+                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot17,))
+                            fetch = c.fetchone()
+                            if fetch != None:
+                                self.slot17name = str(fetch[1])
+                            self.slot18 = int(test[18])
+                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot18,))
+                            fetch = c.fetchone()
+                            if fetch != None:
+                                self.slot18name = str(fetch[1])
+                            self.slot19 = int(test[19])
+                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot19,))
+                            fetch = c.fetchone()
+                            if fetch != None:
+                                self.slot19name = str(fetch[1])
+                            self.slot20 = int(test[20])
+                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot20,))
+                            fetch = c.fetchone()
+                            if fetch != None:
+                                self.slot20name = str(fetch[1])
+                            self.gold = test[21]
+                    party = self.party
+                    party.append(self.name)
+                    member = str(self)
+                    name = unicode(self.name)
+                    c.execute('''UPDATE ID SET ChatInstance=? WHERE Name=?''', (member, name))
+                    conn.commit()
+                    name = (self.name,)
+                    c.execute('''SELECT * FROM PlayerSkills WHERE Name=?''', name)
+                    fetch = c.fetchone()
+                    if fetch == None:
+                        print "Skills not found for", self.name
+                    else:
+                        self.Climbing = int(fetch[1])
+                        self.Climbingtnl = int(fetch[2])
+                        self.Sneakskill = int(fetch[3])
+                        self.Sneakskilltnl = int(fetch[4])
+                    print self.name, "has joined the server"
+                    global userlist
+                    userlist[self.name] = self
+                    self.handle_WELCOME()
+        except:
+            print "Error with LOAD()"
 
     def SAVE(self):
-        global c
-        global conn
-        r = self.room
-        t = self.name
-        t = (r, t,)
-#        try:
-        c.execute('UPDATE Placement SET Room=? WHERE Name=?', t)
-        conn.commit()
-        l = self.classname
-        b = self.level
-        cc = self.exp
-        d = self.exptnl
-        e = self.strength
-        f = self.constitution
-        g = self.dexterity
-        h = self.agility
-        i = self.wisdom
-        j = self.intellegence
-        k = self.name
-        a = (l, b, cc, d, e, f, g, h, i, j, k,)
-        # try:
-        c.execute('UPDATE Character SET Class=?, Level=?, Exp=?, Exptnl=?, Strength=?, Constitution=?, Dexterity=?, Agility=?, Wisdom=?, Intellegence=? WHERE Name=?', a)
-        b = self.mainhandid
-        cc = self.offhandid
-        d = self.helmetid
-        e = self.bodyid
-        f = self.lowerbodyid
-        g = self.bootsid
-        h = self.name
-        a = (b, cc, d, e, f, g, h,)
-        # try:
-        c.execute('UPDATE Equipment SET Mainhand=?, Offhand=?, Helmet=?, Body=?, Lowerbody=?, Boots=? WHERE Name=?', a)
-        b = self.health
-        cc = self.mana
-        d = self.name
-        a = (b, cc, d,)
-        # try:
-        c.execute('UPDATE Vitals SET Health=?, Mana=? WHERE Name=?', a)
-        b = self.slot1
-        cc = self.slot2
-        d = self.slot3
-        e = self.slot4
-        f = self.slot5
-        g = self.slot6
-        h = self.slot7
-        i = self.slot8
-        j = self.slot9
-        k = self.slot10
-        l = self.slot11
-        m = self.slot12
-        n = self.slot13
-        o = self.slot14
-        p = self.slot15
-        q = self.slot16
-        r = self.slot17
-        s = self.slot18
-        t = self.slot19
-        u = self.slot20
-        v = self.gold
-        w = self.name
-        a = (b, cc, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w)
-        c.execute('UPDATE Inventory SET SLOT1=?, SLOT2=?, SLOT3=?, SLOT4=?, SLOT5=?, SLOT6=?, SLOT7=?, SLOT8=?, SLOT9=?, SLOT10=?, SLOT11=?, SLOT12=?, SLOT13=?, SLOT14=?, SLOT15=?, SLOT16=?, SLOT17=?, SLOT18=?, SLOT19=?, SLOT20=?, Gold=? WHERE Name=?', a)
-        # Name, Climblevel, ClimbExp, Sneaklevel, SneakExp, Spotlevel, SpotExp, Swimlevel, SwimExp, Foragelevel, ForageExp, Logginglevel, LoggingExp, Mininglevel, MiningExp, Buildinglevel, BuildingExp, Stonecuttinglevel, StonecuttingExp, Tanninglevel, TanningExp, Woodlevel, Woodexp
-        a = self.name
-        b = self.Climbing
-        cc = self.Climbingtnl
-        d = self.Sneakskill
-        e = self.Sneakskilltnl
-        g = self.Swimming
-        h = self.Swimmingtnl
-        i = self.Foraging
-        j = self.Foragingtnl
-        k = self.Logging
-        l = self.Loggingtnl
-        m = self.Mining
-        n = self.Miningtnl
-        o = self.Building
-        p = self.Buildingtnl
-        q = self.Stonecutting
-        r = self.Stonecuttingtnl
-        s = self.Tanning
-        t = self.Tanningtnl
-        u = self.Woodcutting
-        v = self.Woodcuttingtnl
-        skills = (b, cc, d, e, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, a)
-        c.execute('UPDATE PlayerSkills SET Climblevel=?, ClimbExp=?, Sneaklevel=?, SneakExp=?, Swimlevel=?, SwimExp=?, Foragelevel=?, ForageExp=?, Logginglevel=?, LoggingExp=?, Mininglevel=?, MiningExp=?, Buildinglevel=?, BuildingExp=?, Stonecuttinglevel=?, StonecuttingExp=?, Tanninglevel=?, TanningExp=?, Woodlevel=?, Woodexp=? WHERE Name=?', skills)
-        self.sendLine('Save Successful!')
-        conn.commit()
+        try:
+            global c
+            global conn
+            r = self.room
+            t = self.name
+            t = (r, t,)
+    #        try:
+            c.execute('UPDATE Placement SET Room=? WHERE Name=?', t)
+            conn.commit()
+            l = self.classname
+            b = self.level
+            cc = self.exp
+            d = self.exptnl
+            e = self.strength
+            f = self.constitution
+            g = self.dexterity
+            h = self.agility
+            i = self.wisdom
+            j = self.intellegence
+            k = self.name
+            a = (l, b, cc, d, e, f, g, h, i, j, k,)
+            # try:
+            c.execute('UPDATE Character SET Class=?, Level=?, Exp=?, Exptnl=?, Strength=?, Constitution=?, Dexterity=?, Agility=?, Wisdom=?, Intellegence=? WHERE Name=?', a)
+            b = self.mainhandid
+            cc = self.offhandid
+            d = self.helmetid
+            e = self.bodyid
+            f = self.lowerbodyid
+            g = self.bootsid
+            h = self.name
+            a = (b, cc, d, e, f, g, h,)
+            # try:
+            c.execute('UPDATE Equipment SET Mainhand=?, Offhand=?, Helmet=?, Body=?, Lowerbody=?, Boots=? WHERE Name=?', a)
+            b = self.health
+            cc = self.mana
+            d = self.name
+            a = (b, cc, d,)
+            # try:
+            c.execute('UPDATE Vitals SET Health=?, Mana=? WHERE Name=?', a)
+            b = self.slot1
+            cc = self.slot2
+            d = self.slot3
+            e = self.slot4
+            f = self.slot5
+            g = self.slot6
+            h = self.slot7
+            i = self.slot8
+            j = self.slot9
+            k = self.slot10
+            l = self.slot11
+            m = self.slot12
+            n = self.slot13
+            o = self.slot14
+            p = self.slot15
+            q = self.slot16
+            r = self.slot17
+            s = self.slot18
+            t = self.slot19
+            u = self.slot20
+            v = self.gold
+            w = self.name
+            a = (b, cc, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w)
+            c.execute('UPDATE Inventory SET SLOT1=?, SLOT2=?, SLOT3=?, SLOT4=?, SLOT5=?, SLOT6=?, SLOT7=?, SLOT8=?, SLOT9=?, SLOT10=?, SLOT11=?, SLOT12=?, SLOT13=?, SLOT14=?, SLOT15=?, SLOT16=?, SLOT17=?, SLOT18=?, SLOT19=?, SLOT20=?, Gold=? WHERE Name=?', a)
+            # Name, Climblevel, ClimbExp, Sneaklevel, SneakExp, Spotlevel, SpotExp, Swimlevel, SwimExp, Foragelevel, ForageExp, Logginglevel, LoggingExp, Mininglevel, MiningExp, Buildinglevel, BuildingExp, Stonecuttinglevel, StonecuttingExp, Tanninglevel, TanningExp, Woodlevel, Woodexp
+            a = self.name
+            b = self.Climbing
+            cc = self.Climbingtnl
+            d = self.Sneakskill
+            e = self.Sneakskilltnl
+            g = self.Swimming
+            h = self.Swimmingtnl
+            i = self.Foraging
+            j = self.Foragingtnl
+            k = self.Logging
+            l = self.Loggingtnl
+            m = self.Mining
+            n = self.Miningtnl
+            o = self.Building
+            p = self.Buildingtnl
+            q = self.Stonecutting
+            r = self.Stonecuttingtnl
+            s = self.Tanning
+            t = self.Tanningtnl
+            u = self.Woodcutting
+            v = self.Woodcuttingtnl
+            skills = (b, cc, d, e, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, a)
+            c.execute('UPDATE PlayerSkills SET Climblevel=?, ClimbExp=?, Sneaklevel=?, SneakExp=?, Swimlevel=?, SwimExp=?, Foragelevel=?, ForageExp=?, Logginglevel=?, LoggingExp=?, Mininglevel=?, MiningExp=?, Buildinglevel=?, BuildingExp=?, Stonecuttinglevel=?, StonecuttingExp=?, Tanninglevel=?, TanningExp=?, Woodlevel=?, Woodexp=? WHERE Name=?', skills)
+            self.sendLine('Save Successful!')
+            conn.commit()
+        except:
+            print "Error with Save()"
 
     def FIRSTSAVE(self):
-        global c
-        global conn
-        r = self.room
-        t = self.name
-        t = (t, r,)
-#        try:
-        c.execute('''INSERT INTO Placement VALUES (?,?)''', t)
-        l = self.classname
-        b = self.level
-        cc = self.exp
-        d = self.exptnl
-        e = self.strength
-        f = self.constitution
-        g = self.dexterity
-        h = self.agility
-        i = self.wisdom
-        j = self.intellegence
-        k = self.name
-        n = self.race
-        a = (k, l, b, cc, d, e, f, g, h, i, j, n,)
-        # try:
-        c.execute('INSERT INTO Character VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', a)
-        b = self.mainhandid
-        cc = self.offhandid
-        d = self.helmetid
-        e = self.bodyid
-        f = self.lowerbodyid
-        g = self.bootsid
-        h = self.name
-        a = (h, b, cc, d, e, f, g,)
-        # try:
-        c.execute('INSERT INTO Equipment VALUES (?,?,?,?,?,?,?)', a)
-        b = self.slot1
-        cc = self.slot2
-        d = self.slot3
-        e = self.slot4
-        f = self.slot5
-        g = self.slot6
-        h = self.slot7
-        i = self.slot8
-        j = self.slot9
-        k = self.slot10
-        l = self.slot11
-        m = self.slot12
-        n = self.slot13
-        o = self.slot14
-        p = self.slot15
-        q = self.slot16
-        r = self.slot17
-        s = self.slot18
-        t = self.slot19
-        u = self.slot20
-        v = self.gold
-        w = self.name
-        a = (w, b, cc, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v)
-        c.execute('INSERT INTO Inventory VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', a)
-        b = self.health
-        cc = self.mana
-        d = self.name
-        a = (d, b, cc, 10)
-        # try:
-        c.execute('INSERT INTO Vitals VALUES (?,?,?,?)', a)
-        # Name, Climblevel, ClimbExp, Sneaklevel, SneakExp, Spotlevel, SpotExp, Swimlevel, SwimExp, Foragelevel, ForageExp, Logginglevel, LoggingExp, Mininglevel, MiningExp, Buildinglevel, BuildingExp, Stonecuttinglevel, StonecuttingExp, Tanninglevel, TanningExp, Woodlevel, Woodexp
-        a = self.name
-        b = self.Climbing
-        cc = self.Climbingtnl
-        d = self.Sneakskill
-        e = self.Sneakskilltnl
-        g = self.Swimming
-        h = self.Swimmingtnl
-        i = self.Foraging
-        j = self.Foragingtnl
-        k = self.Logging
-        l = self.Loggingtnl
-        m = self.Mining
-        n = self.Miningtnl
-        o = self.Building
-        p = self.Buildingtnl
-        q = self.Stonecutting
-        r = self.Stonecuttingtnl
-        s = self.Tanning
-        t = self.Tanningtnl
-        u = self.Woodcutting
-        v = self.Woodcuttingtnl
-        skills = (a, b, cc, d, e, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v)
-        c.execute('INSERT INTO PlayerSkills VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', skills)
-        self.sendLine('Creation Successful!')
-        conn.commit()
+        try:
+            global c
+            global conn
+            r = self.room
+            t = self.name
+            t = (t, r,)
+    #        try:
+            c.execute('''INSERT INTO Placement VALUES (?,?)''', t)
+            l = self.classname
+            b = self.level
+            cc = self.exp
+            d = self.exptnl
+            e = self.strength
+            f = self.constitution
+            g = self.dexterity
+            h = self.agility
+            i = self.wisdom
+            j = self.intellegence
+            k = self.name
+            n = self.race
+            a = (k, l, b, cc, d, e, f, g, h, i, j, n,)
+            # try:
+            c.execute('INSERT INTO Character VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', a)
+            b = self.mainhandid
+            cc = self.offhandid
+            d = self.helmetid
+            e = self.bodyid
+            f = self.lowerbodyid
+            g = self.bootsid
+            h = self.name
+            a = (h, b, cc, d, e, f, g,)
+            # try:
+            c.execute('INSERT INTO Equipment VALUES (?,?,?,?,?,?,?)', a)
+            b = self.slot1
+            cc = self.slot2
+            d = self.slot3
+            e = self.slot4
+            f = self.slot5
+            g = self.slot6
+            h = self.slot7
+            i = self.slot8
+            j = self.slot9
+            k = self.slot10
+            l = self.slot11
+            m = self.slot12
+            n = self.slot13
+            o = self.slot14
+            p = self.slot15
+            q = self.slot16
+            r = self.slot17
+            s = self.slot18
+            t = self.slot19
+            u = self.slot20
+            v = self.gold
+            w = self.name
+            a = (w, b, cc, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v)
+            c.execute('INSERT INTO Inventory VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', a)
+            b = self.health
+            cc = self.mana
+            d = self.name
+            a = (d, b, cc, 10)
+            # try:
+            c.execute('INSERT INTO Vitals VALUES (?,?,?,?)', a)
+            # Name, Climblevel, ClimbExp, Sneaklevel, SneakExp, Spotlevel, SpotExp, Swimlevel, SwimExp, Foragelevel, ForageExp, Logginglevel, LoggingExp, Mininglevel, MiningExp, Buildinglevel, BuildingExp, Stonecuttinglevel, StonecuttingExp, Tanninglevel, TanningExp, Woodlevel, Woodexp
+            a = self.name
+            b = self.Climbing
+            cc = self.Climbingtnl
+            d = self.Sneakskill
+            e = self.Sneakskilltnl
+            g = self.Swimming
+            h = self.Swimmingtnl
+            i = self.Foraging
+            j = self.Foragingtnl
+            k = self.Logging
+            l = self.Loggingtnl
+            m = self.Mining
+            n = self.Miningtnl
+            o = self.Building
+            p = self.Buildingtnl
+            q = self.Stonecutting
+            r = self.Stonecuttingtnl
+            s = self.Tanning
+            t = self.Tanningtnl
+            u = self.Woodcutting
+            v = self.Woodcuttingtnl
+            skills = (a, b, cc, d, e, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v)
+            c.execute('INSERT INTO PlayerSkills VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', skills)
+            self.sendLine('Creation Successful!')
+            conn.commit()
+        except:
+            print "Error in FIRSTSAVE()"
 
     def lineReceived(self, line):
         if self.state == "CHANGEPASS":
@@ -724,24 +759,87 @@ class Chat(LineReceiver):
             self.LOOK()
             self.state = "CHAT"
             return
+        if(self.state == 'RoomIDCreate1'):
+            self.CreateRoom1(line)
+            return
+        if(self.state == 'RoomIDCreate2'):
+            self.CreateRoom2(line)
+            return
+        if(self.state == 'RoomIDCreate3'):
+            self.CreateRoom3(line)
+            return
+        if(self.state == 'RoomIDCreate4'):
+            self.CreateRoom4(line)
+            return
+        if(self.state == 'RoomIDCreate5'):
+            self.CreateRoom5(line)
+            return
+        if(self.state == 'RoomIDCreate6'):
+            self.CreateRoom6(line)
+            return
+        if(self.state == 'RoomIDCreate7'):
+            self.CreateRoom7(line)
+            return
+        if(self.state == 'RoomIDCreate8'):
+            self.CreateRoom8(line)
+            return
+        if(self.state == 'RoomIDCreate9'):
+            self.CreateRoom9(line)
+            return
+        if(self.state == 'RoomIDCreate10'):
+            self.CreateRoom10(line)
+            return
+        if(self.state == 'RoomIDCreate11'):
+            self.CreateRoom11(line)
+            return
+        if(self.state == 'RoomIDCreate12'):
+            self.CreateRoom12(line)
+            return
+        if(self.state == 'RoomIDCreate13'):
+            self.CreateRoom13(line)
+            return
+        if(self.state == 'RoomIDCreateConfirm'):
+            self.CreateRoomConfirm(line)
+            return
+        if(self.state == 'RoomIDCreateUpDown1'):
+            self.CreateRoomUpDown1(line)
+            return
+        if(self.state == 'RoomIDCreateUpDown2'):
+            self.CreateRoomUpDown2(line)
+            return
+        if(self.state == 'RoomIDCreateUpDown3'):
+            self.CreateRoomUpDown3(line)
+            return
+        if(self.state == 'RoomIDCreateUpDownConfirm'):
+            self.CreateRoomUpDownConfirm(line)
+            return
 
 #CREATION SEQUENCE
 
     def handle_NCREATE(self, name):
-        global c
-        na = name
-        t = str(name)
-        n = t
-        t = (t,)
-        c.execute('SELECT * FROM ID WHERE Name=?', t)
-        name = c.fetchone()
-        if(name == None):
-            self.name = na
-            self.sendLine("%s is available" % (n))
-            self.sendLine("Is %s correct? (Y/N)" % (n))
-            self.state = "NCHECK"
-        else:
-            self.sendLine("Name is already taken, please choose another...")
+        try:
+            global c
+            na = name
+            if len(name) <= 4:
+                self.sendLine("Name too short, must be at least 5 characters long")
+                return
+            if name.isalpha() != True:
+                self.sendLine("Name must be made of only alphabetical characters")
+                return
+            t = str(name)
+            n = t
+            t = (t,)
+            c.execute('SELECT * FROM ID WHERE Name=?', t)
+            name = c.fetchone()
+            if(name == None):
+                self.name = na
+                self.sendLine("%s is available" % (n))
+                self.sendLine("Is %s correct? (Y/N)" % (n))
+                self.state = "NCHECK"
+            else:
+                self.sendLine("Name is already taken, please choose another...")
+        except:
+            print "Error in handle_NCREATE()"
 
     def handle_DOUBLECHECK(self, answer):
         if answer in('yes', 'y', 'Yes', 'Y'):
@@ -1091,7 +1189,7 @@ class Chat(LineReceiver):
         if classname in('rogue','Rogue'):
             self.handle_CLEARSCREEN()
             self.sendLine("The rogue is a class which is trained in quick, accurate strikes and,")
-            self.sendLine("weakening his enemies. He utilizes a high dexterity for accuracy and")
+            self.sendLine("weakening his(her) enemies. He(she) utilizes a high dexterity for accuracy and")
             self.sendLine("agility to evade many incoming attacks. Advanced classes are as follows...")
             self.sendLine("")
             self.sendLine("Advanced Class   Requirement")
@@ -1569,13 +1667,13 @@ class Chat(LineReceiver):
                 CR = test2[2]
                 CR = float(CR)
                 CR = self.level / CR
-                if(CR >= 0.00):
-                    Rating = 'Impossible'
                 if(CR >= 0.35):
-                    Rating = 'Very Hard'
+                    Rating = 'Impossible'
                 if(CR >= 0.50):
-                    Rating = 'Hard'
+                    Rating = 'Very Hard'
                 if(CR >= 0.66):
+                    Rating = 'Hard'
+                if(CR >= 0.75):
                     Rating = 'Normal-Hard'
                 if(CR >= 1.00):
                     Rating = 'Normal'
@@ -1615,203 +1713,211 @@ class Chat(LineReceiver):
             self.sendLine("%s" % players)
 
     def moveRooms(self, answer):
-        room = self.room
-        room = (room,)
-        c.execute("""SELECT * FROM RoomExits where ID=?""", room)
-        test = c.fetchone()
-        direction = answer
-        if direction in ('N', 'n', 'north', 'North'):
-            if test[6] not in ('', None):
-                self.room = test[6]
-                self.updateRoom('North', 'South')
-                self.displayExits()
-            else:
-                self.sendLine("Cannot go this direction")
-                self.displayExits()
-        if direction in ('S', 's', 'south', 'South'):
-            if test[8] not in ('', None):
-                self.room = test[8]
-                self.updateRoom('South', 'North')
-                self.displayExits()
-            else:
-                self.sendLine("Cannot go this direction")
-                self.displayExits()
-        if direction in ('E', 'e', 'East', 'east'):
-            if test[7] not in ('', None):
-                self.room = test[7]
-                self.updateRoom('East', 'West')
-                self.displayExits()
-            else:
-                self.sendLine("Cannot go this direction")
-                self.displayExits()
-        if direction in ('W', 'w', 'west', 'West'):
-            if test[9] not in ('', None):
-                self.room = test[9]
-                self.updateRoom('West', 'East')
-                self.displayExits()
-            else:
-                self.sendLine("Cannot go this direction")
-                self.displayExits()
-        c.execute('''SELECT * FROM RoomUpDown WHERE ID=?''', room)
-        test = c.fetchone()
-        if direction in ('D', 'd', 'down', 'Down'):
-            if test[2] not in ('', None):
-                self.room = test[2]
-                self.updateRoom('Down', 'Above')
-                self.displayExits()
-            else:
-                self.sendLine("Cannot go this direction")
-                self.displayExits()
-        if direction in ('U', 'u', 'up', 'Up'):
-            if test[1] not in ('', None):
-                self.room = test[1]
-                self.updateRoom('Up', 'Below')
-                self.displayExits()
-            else:
-                self.sendLine("Cannot go this direction")
-                self.displayExits()
+        try:
+            room = self.room
+            room = (room,)
+            c.execute("""SELECT * FROM RoomExits where ID=?""", room)
+            test = c.fetchone()
+            direction = answer
+            if direction in ('N', 'n', 'north', 'North'):
+                if test[6] not in ('', None):
+                    self.room = test[6]
+                    self.updateRoom('North', 'South')
+                    self.displayExits()
+                else:
+                    self.sendLine("Cannot go this direction")
+                    self.displayExits()
+            if direction in ('S', 's', 'south', 'South'):
+                if test[8] not in ('', None):
+                    self.room = test[8]
+                    self.updateRoom('South', 'North')
+                    self.displayExits()
+                else:
+                    self.sendLine("Cannot go this direction")
+                    self.displayExits()
+            if direction in ('E', 'e', 'East', 'east'):
+                if test[7] not in ('', None):
+                    self.room = test[7]
+                    self.updateRoom('East', 'West')
+                    self.displayExits()
+                else:
+                    self.sendLine("Cannot go this direction")
+                    self.displayExits()
+            if direction in ('W', 'w', 'west', 'West'):
+                if test[9] not in ('', None):
+                    self.room = test[9]
+                    self.updateRoom('West', 'East')
+                    self.displayExits()
+                else:
+                    self.sendLine("Cannot go this direction")
+                    self.displayExits()
+            c.execute('''SELECT * FROM RoomUpDown WHERE ID=?''', room)
+            test = c.fetchone()
+            if direction in ('D', 'd', 'down', 'Down'):
+                if test[2] not in ('', None):
+                    self.room = test[2]
+                    self.updateRoom('Down', 'Above')
+                    self.displayExits()
+                else:
+                    self.sendLine("Cannot go this direction")
+                    self.displayExits()
+            if direction in ('U', 'u', 'up', 'Up'):
+                if test[1] not in ('', None):
+                    self.room = test[1]
+                    self.updateRoom('Up', 'Below')
+                    self.displayExits()
+                else:
+                    self.sendLine("Cannot go this direction")
+                    self.displayExits()
+        except:
+            print "Problem in moveRooms()"
 
     def updateRoom(self, direction, opposite):
-        global c
-        room = self.room
-        roomc = (room,)
-        c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
-        test = c.fetchone()
-        if test is None:
-            self.room = self.lastroom
-            self.sendLine("Something happened... Didn't move")
-            return
-        counter = 1
-        while counter <= 20:
-            if test[counter] not in('', None, 'None'):
-                counter = counter + 1
-            else:
-                lastroom = self.lastroom
-                last = (lastroom,)
-                c.execute('''SELECT * FROM RoomPlayers where ID=?''', last)
-                test = c.fetchone()
-                count = 1
-                while(count <= 20):
-                    teststr = test[count]
-                    teststr = str(teststr)
-                    if teststr in('', None):
-                        count = count + 1
-                    else:
-                        if teststr == self.name:
-                            pass
+        try:
+            global c
+            room = self.room
+            roomc = (room,)
+            c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
+            test = c.fetchone()
+            if test is None:
+                self.room = self.lastroom
+                self.sendLine("Something happened... Didn't move")
+                return
+            counter = 1
+            while counter <= 20:
+                if test[counter] not in('', None, 'None'):
+                    counter = counter + 1
+                else:
+                    lastroom = self.lastroom
+                    last = (lastroom,)
+                    c.execute('''SELECT * FROM RoomPlayers where ID=?''', last)
+                    test = c.fetchone()
+                    count = 1
+                    while(count <= 20):
+                        teststr = test[count]
+                        teststr = str(teststr)
+                        if teststr in('', None):
                             count = count + 1
                         else:
-                            name = teststr
-                            count = count + 1
-                            diction = self.users
-                            name = str(name)
-                            atk = diction.get(name)
-                            if direction in('Teleport'):
-                                atk.sendLine("%s has teleported away!" % (self.name))
+                            if teststr == self.name:
+                                pass
+                                count = count + 1
                             else:
-                                atk.sendLine("%s has moved %s" % (self.name, direction))
-                column = "'Slot" + str(self.placement) + "'"
-                c.execute("UPDATE RoomPlayers SET " + column + "=? WHERE ID=?", ('', lastroom))
-                conn.commit()
-                c.execute('''SELECT * FROM RoomPlayers where ID=?''', roomc)
-                test = c.fetchone()
-                count = 1
-                while(count <= 20):
-                    teststr = test[count]
-                    teststr = str(teststr)
-                    if teststr in('', None):
-                        count = count + 1
-                    else:
-                        if teststr == self.name:
-                            pass
+                                name = teststr
+                                count = count + 1
+                                diction = self.users
+                                name = str(name)
+                                atk = diction.get(name)
+                                if direction in('Teleport'):
+                                    atk.sendLine("%s has teleported away!" % (self.name))
+                                else:
+                                    atk.sendLine("%s has moved %s" % (self.name, direction))
+                    column = "'Slot" + str(self.placement) + "'"
+                    c.execute("UPDATE RoomPlayers SET " + column + "=? WHERE ID=?", ('', lastroom))
+                    conn.commit()
+                    c.execute('''SELECT * FROM RoomPlayers where ID=?''', roomc)
+                    test = c.fetchone()
+                    count = 1
+                    while(count <= 20):
+                        teststr = test[count]
+                        teststr = str(teststr)
+                        if teststr in('', None):
                             count = count + 1
                         else:
-                            name = teststr
-                            count = count + 1
-                            diction = self.users
-                            name = str(name)
-                            atk = diction.get(name)
-                            if direction in('Teleport'):
-                                atk.sendLine("%s has teleported in" % (self.name))
+                            if teststr == self.name:
+                                pass
+                                count = count + 1
                             else:
-                                atk.sendLine("%s has entered from the %s" % (self.name, opposite))
-                column = "'Slot" + str(counter) + "'"
-                c.execute("UPDATE RoomPlayers SET " + column + "=? WHERE ID=?", (self.name, room))
-                self.lastroom = room
-                self.placement = counter
-                self.room = room
-                c.execute("SELECT * FROM RoomExits WHERE ID=?", (self.room,))
-                fetch = c.fetchone()
-                self.xcoord = str(fetch[10])
-                self.ycoord = str(fetch[11])
-                self.zcoord = str(fetch[12])
-                if (self.room >= 1) and (self.room <= 12):
-                    self.regionname = 'Exordior'
-                if (self.room >= 13) and (self.room <= 29):
-                    self.regionname = 'Cave of Exordior'
-                if (self.room >= 30) and (self.room <= 64):
-                    self.regionname = 'Exordior Mine'
-                conn.commit()
-                counter = 30
-#        else:
-#            print "Room is full, please try again later"
-        conn.commit()
+                                name = teststr
+                                count = count + 1
+                                diction = self.users
+                                name = str(name)
+                                atk = diction.get(name)
+                                if direction in('Teleport'):
+                                    atk.sendLine("%s has teleported in" % (self.name))
+                                else:
+                                    atk.sendLine("%s has entered from the %s" % (self.name, opposite))
+                    column = "'Slot" + str(counter) + "'"
+                    c.execute("UPDATE RoomPlayers SET " + column + "=? WHERE ID=?", (self.name, room))
+                    self.lastroom = room
+                    self.placement = counter
+                    self.room = room
+                    c.execute("SELECT * FROM RoomExits WHERE ID=?", (self.room,))
+                    fetch = c.fetchone()
+                    self.xcoord = str(fetch[10])
+                    self.ycoord = str(fetch[11])
+                    self.zcoord = str(fetch[12])
+                    if (self.room >= 1) and (self.room <= 12):
+                        self.regionname = 'Exordior'
+                    if (self.room >= 13) and (self.room <= 29):
+                        self.regionname = 'Cave of Exordior'
+                    if (self.room >= 30) and (self.room <= 64):
+                        self.regionname = 'Exordior Mine'
+                    conn.commit()
+                    counter = 30
+            conn.commit()
+        except:
+            self.sendLine("Room move was not successful")
 
     def displayExits(self):
-        global c
-        self.LocationPrint()
-        room = (self.room,)
-        c.execute("""SELECT * FROM RoomExits where ID=?""", room)
-        test = c.fetchone()
-        c.execute('''SELECT * FROM RoomUpDown WHERE ID=?''', room)
-        test2 = c.fetchone()
-        description = str(test[1])
-        ndescription = str(test[2])
-        edescription = str(test[3])
-        sdescription = str(test[4])
-        wdescription = str(test[5])
-        self.sendLine("%s" % description)
-        if ndescription not in (None, 'None'):
-            self.sendLine("%s" % ndescription)
-        if edescription not in (None, 'None'):
-            self.sendLine("%s" % edescription)
-        if sdescription not in (None, 'None'):
-            self.sendLine("%s" % sdescription)
-        if wdescription not in (None, 'None'):
-            self.sendLine("%s" % wdescription)
-        self.sendLine("")
-        rooms = "available exits are: "
-        if self.adminmode == True:
-            if test[6] not in ('', None):
-                rooms = rooms + " N(" + str(test[6]) + ')'
-            if test[8] not in ('', None):
-                rooms = rooms + " S(" + str(test[8]) + ')'
-            if test[7] not in ('', None):
-                rooms = rooms + " E(" + str(test[7]) + ')'
-            if test[9] not in ('', None):
-                rooms = rooms + " W(" + str(test[9]) + ')'
-            if test2 != None:
-                if test2[1] not in ('', None):
-                    rooms = rooms + " U(" + str(test2[1]) + ')'
-                if test2[2] not in ('', None):
-                    rooms = rooms + " D(" + str(test2[2]) + ')'
-        else:
-            if test[6] not in ('', None):
-                rooms = rooms + " N"
-            if test[8] not in ('', None):
-                rooms = rooms + " S"
-            if test[7] not in ('', None):
-                rooms = rooms + " E"
-            if test[9] not in ('', None):
-                rooms = rooms + " W"
-            if test2 != None:
-                if test2[1] not in ('', None):
-                    rooms = rooms + " U"
-                if test2[2] not in ('', None):
-                    rooms = rooms + " D"
-        self.sendLine("%s" % rooms)
-        self.displayPlayers()
-        self.displayMobs()
+        try:
+            global c
+            self.LocationPrint()
+            room = (self.room,)
+            c.execute("""SELECT * FROM RoomExits where ID=?""", room)
+            test = c.fetchone()
+            c.execute('''SELECT * FROM RoomUpDown WHERE ID=?''', room)
+            test2 = c.fetchone()
+            description = str(test[1])
+            ndescription = str(test[2])
+            edescription = str(test[3])
+            sdescription = str(test[4])
+            wdescription = str(test[5])
+            self.sendLine("%s" % description)
+            if ndescription not in (None, 'None'):
+                self.sendLine("%s" % ndescription)
+            if edescription not in (None, 'None'):
+                self.sendLine("%s" % edescription)
+            if sdescription not in (None, 'None'):
+                self.sendLine("%s" % sdescription)
+            if wdescription not in (None, 'None'):
+                self.sendLine("%s" % wdescription)
+            self.sendLine("")
+            rooms = "available exits are: "
+            if self.adminmode == True:
+                if test[6] not in ('', None):
+                    rooms = rooms + " N(" + str(test[6]) + ')'
+                if test[8] not in ('', None):
+                    rooms = rooms + " S(" + str(test[8]) + ')'
+                if test[7] not in ('', None):
+                    rooms = rooms + " E(" + str(test[7]) + ')'
+                if test[9] not in ('', None):
+                    rooms = rooms + " W(" + str(test[9]) + ')'
+                if test2 != None:
+                    if test2[1] not in ('', None):
+                        rooms = rooms + " U(" + str(test2[1]) + ')'
+                    if test2[2] not in ('', None):
+                        rooms = rooms + " D(" + str(test2[2]) + ')'
+            else:
+                if test[6] not in ('', None):
+                    rooms = rooms + " N"
+                if test[8] not in ('', None):
+                    rooms = rooms + " S"
+                if test[7] not in ('', None):
+                    rooms = rooms + " E"
+                if test[9] not in ('', None):
+                    rooms = rooms + " W"
+                if test2 != None:
+                    if test2[1] not in ('', None):
+                        rooms = rooms + " U"
+                    if test2[2] not in ('', None):
+                        rooms = rooms + " D"
+            self.sendLine("%s" % rooms)
+            self.displayPlayers()
+            self.displayMobs()
+        except:
+            self.sendLine("Display room didn't work...'")
+            self.room = self.lastroom
 
     def LocationPrint(self):
         if self.adminmode == True:
@@ -1882,86 +1988,89 @@ class Chat(LineReceiver):
         self.sendLine("  Armor : %s" % (self.bootsvalue))
 
     def EQUIPSTART(self):
-        t = self.mainhandid
-        t = (t,)
-        c.execute('SELECT * FROM Gear WHERE ID=?', t)
-        test = c.fetchone()
-        if test == None:
-            pass
-        else:
-            self.mainhand = str(test[1])
-            self.mainhandvalmin = test[3]
-            self.mainhandvalmax = test[4]
-            self.mainhandspeed = test[5]
-        t = self.offhandid
-        t = (t,)
-        c.execute('SELECT * FROM Gear WHERE ID=?', t)
-        test = c.fetchone()
-        if test == None:
-            pass
-        else:
-            self.offhand = str(test[1])
-            self.offhandtype = str(test[2])
-            self.offhandvalmin = test[3]
-            self.offhandvalmax = test[4]
-            self.offhandspeed = test[5]
-            if self.offhandtype == 'Weapon':
-                att = self.mainhandspeed
-                att2 = self.offhandspeed / 2.00
-                attackspeed = att + att2
-                self.attackspeed = attackspeed
-            else:
-                self.attackspeed = self.mainhandspeed
-            if self.offhandtype == 'Shield':
-                defence = self.offhandvalmin
-                self.defence = defence + self.defence
-            else:
+        try:
+            t = self.mainhandid
+            t = (t,)
+            c.execute('SELECT * FROM Gear WHERE ID=?', t)
+            test = c.fetchone()
+            if test == None:
                 pass
-        t = self.helmet
-        t = (t,)
-        c.execute('SELECT * FROM Gear WHERE ID=?', t)
-        test = c.fetchone()
-        if test == None:
-            pass
-        else:
-            self.helmet = str(test[1])
-            self.helmetvalue = test[3]
-            defence = self.defence + self.helmetvalue
-            self.defence = defence
-        t = self.bodyid
-        t = (t,)
-        c.execute('SELECT * FROM Gear WHERE ID=?', t)
-        test = c.fetchone()
-        if test == None:
-            pass
-        else:
-            self.body = str(test[1])
-            self.bodyvalue = test[3]
-            defence = self.defence + self.bodyvalue
-            self.defence = defence
-        t = self.lowerbodyid
-        t = (t,)
-        c.execute('SELECT * FROM Gear WHERE ID=?', t)
-        test = c.fetchone()
-        if test == None:
-            pass
-        else:
-            self.lowerbody = str(test[1])
-            self.lowerbodyvalue = test[3]
-            defence = self.defence + self.lowerbodyvalue
-            self.defence = defence
-        t = self.bootsid
-        t = (t,)
-        c.execute('SELECT * FROM Gear WHERE ID=?', t)
-        test = c.fetchone()
-        if test == None:
-            pass
-        else:
-            self.boots = str(test[1])
-            self.bootsvalue = test[3]
-            defence = self.defence + self.bootsvalue
-            self.defence = defence
-            self.sendLine("Gear Equipped! Check it with /equip")
+            else:
+                self.mainhand = str(test[1])
+                self.mainhandvalmin = test[3]
+                self.mainhandvalmax = test[4]
+                self.mainhandspeed = test[5]
+            t = self.offhandid
+            t = (t,)
+            c.execute('SELECT * FROM Gear WHERE ID=?', t)
+            test = c.fetchone()
+            if test == None:
+                pass
+            else:
+                self.offhand = str(test[1])
+                self.offhandtype = str(test[2])
+                self.offhandvalmin = test[3]
+                self.offhandvalmax = test[4]
+                self.offhandspeed = test[5]
+                if self.offhandtype == 'Weapon':
+                    att = self.mainhandspeed
+                    att2 = self.offhandspeed / 2.00
+                    attackspeed = att + att2
+                    self.attackspeed = attackspeed
+                else:
+                    self.attackspeed = self.mainhandspeed
+                if self.offhandtype == 'Shield':
+                    defence = self.offhandvalmin
+                    self.defence = defence + self.defence
+                else:
+                    pass
+            t = self.helmet
+            t = (t,)
+            c.execute('SELECT * FROM Gear WHERE ID=?', t)
+            test = c.fetchone()
+            if test == None:
+                pass
+            else:
+                self.helmet = str(test[1])
+                self.helmetvalue = test[3]
+                defence = self.defence + self.helmetvalue
+                self.defence = defence
+            t = self.bodyid
+            t = (t,)
+            c.execute('SELECT * FROM Gear WHERE ID=?', t)
+            test = c.fetchone()
+            if test == None:
+                pass
+            else:
+                self.body = str(test[1])
+                self.bodyvalue = test[3]
+                defence = self.defence + self.bodyvalue
+                self.defence = defence
+            t = self.lowerbodyid
+            t = (t,)
+            c.execute('SELECT * FROM Gear WHERE ID=?', t)
+            test = c.fetchone()
+            if test == None:
+                pass
+            else:
+                self.lowerbody = str(test[1])
+                self.lowerbodyvalue = test[3]
+                defence = self.defence + self.lowerbodyvalue
+                self.defence = defence
+            t = self.bootsid
+            t = (t,)
+            c.execute('SELECT * FROM Gear WHERE ID=?', t)
+            test = c.fetchone()
+            if test == None:
+                pass
+            else:
+                self.boots = str(test[1])
+                self.bootsvalue = test[3]
+                defence = self.defence + self.bootsvalue
+                self.defence = defence
+                self.sendLine("Gear Equipped! Check it with /equip")
+        except:
+            print "EQUIPSTART() Failed"
 
     def STATS(self):
         self.sendLine("================================")
@@ -1985,108 +2094,114 @@ class Chat(LineReceiver):
         self.sendLine("Int : %2s   Mag Atk:  %3s" % (self.intellegence, self.mattack)) # ++mana     ++magic attack     +mana regen
 # Party Commands!
     def PartyDisplayStats(self):
-        if self.partybool is False:
-            self.sendLine('No party to display')
-        else:
-            party = self.party
-            try:
-                party[0]
-                countmax = 0
-            except:
-                pass
-            try:
-                party[1]
-                countmax = countmax + 1
-            except:
-                pass
-            try:
-                party[2]
-                countmax = countmax + 1
-            except:
-                pass
-            try:
-                party[3]
-                countmax = countmax + 1
-            except:
-                pass
-            try:
-                party[4]
-                countmax = countmax + 1
-            except:
-                pass
-            try:
-                party[5]
-                countmax = countmax + 1
-            except:
-                pass
-            global userlist
-            diction = userlist
-            count = 0
-            party = self.party
-            while count <= countmax:
-                member = party[count]
-                person = str(member)
-                if person == self.name:
-                    count = count + 1
-                else:
-                    member = diction.get(person)
-                    self.sendLine("")
-                    self.sendLine("%s" % member.name)
-                    self.VitalBarDisplay('health', member.health, member.maxhealth)
-                    self.sendLine('%3s / %3s' % (member.health, member.maxhealth))
-                    self.VitalBarDisplay('mana', member.mana, member.maxmana)
-                    self.sendLine('%3s / %3s' % (member.mana, member.maxmana))
-                    count = count + 1
+        try:
+            if self.partybool is False:
+                self.sendLine('No party to display')
+            else:
+                party = self.party
+                try:
+                    party[0]
+                    countmax = 0
+                except:
+                    pass
+                try:
+                    party[1]
+                    countmax = countmax + 1
+                except:
+                    pass
+                try:
+                    party[2]
+                    countmax = countmax + 1
+                except:
+                    pass
+                try:
+                    party[3]
+                    countmax = countmax + 1
+                except:
+                    pass
+                try:
+                    party[4]
+                    countmax = countmax + 1
+                except:
+                    pass
+                try:
+                    party[5]
+                    countmax = countmax + 1
+                except:
+                    pass
+                global userlist
+                diction = userlist
+                count = 0
+                party = self.party
+                while count <= countmax:
+                    member = party[count]
+                    person = str(member)
+                    if person == self.name:
+                        count = count + 1
+                    else:
+                        member = diction.get(person)
+                        self.sendLine("")
+                        self.sendLine("%s" % member.name)
+                        self.VitalBarDisplay('health', member.health, member.maxhealth)
+                        self.sendLine('%3s / %3s' % (member.health, member.maxhealth))
+                        self.VitalBarDisplay('mana', member.mana, member.maxmana)
+                        self.sendLine('%3s / %3s' % (member.mana, member.maxmana))
+                        count = count + 1
+        except:
+            print "PartyDisplayStats() failed"
 
     def PartyChat(self, message):
-        if self.partybool is False:
-            self.sendLine('No party to display')
-        else:
-            party = self.party
-            try:
-                party[0]
-                countmax = 0
-            except:
-                pass
-            try:
-                party[1]
-                countmax = countmax + 1
-            except:
-                pass
-            try:
-                party[2]
-                countmax = countmax + 1
-            except:
-                pass
-            try:
-                party[3]
-                countmax = countmax + 1
-            except:
-                pass
-            try:
-                party[4]
-                countmax = countmax + 1
-            except:
-                pass
-            try:
-                party[5]
-                countmax = countmax + 1
-            except:
-                pass
-            global userlist
-            diction = userlist
-            count = 0
-            party = self.party
-            while count <= countmax:
-                member = party[count]
-                person = str(member)
-                if person == self.name:
-                    self.sendLine("(Party)%s :: %s" %(self.name, message))
-                    count += 1
-                else:
-                    member = diction.get(person)
-                    member.sendLine("(Party)%s :: %s" %(self.name, message))
-                    count = count + 1
+        try:
+            if self.partybool is False:
+                self.sendLine('No party to display')
+            else:
+                party = self.party
+                try:
+                    party[0]
+                    countmax = 0
+                except:
+                    pass
+                try:
+                    party[1]
+                    countmax = countmax + 1
+                except:
+                    pass
+                try:
+                    party[2]
+                    countmax = countmax + 1
+                except:
+                    pass
+                try:
+                    party[3]
+                    countmax = countmax + 1
+                except:
+                    pass
+                try:
+                    party[4]
+                    countmax = countmax + 1
+                except:
+                    pass
+                try:
+                    party[5]
+                    countmax = countmax + 1
+                except:
+                    pass
+                global userlist
+                diction = userlist
+                count = 0
+                party = self.party
+                while count <= countmax:
+                    member = party[count]
+                    person = str(member)
+                    if person == self.name:
+                        self.sendLine("(Party)%s :: %s" %(self.name, message))
+                        count += 1
+                    else:
+                        member = diction.get(person)
+                        member.sendLine("(Party)%s :: %s" %(self.name, message))
+                        count = count + 1
+        except:
+            print "Party Chat failing"
 
     def PartyCount(self):
         party = self.party
@@ -2126,111 +2241,121 @@ class Chat(LineReceiver):
             self.partybool = False
 
     def PartyInvite(self, name):
-        party = self.party
-        if party == []:
-            self.sendLine("Small party error... relog please")
-        else:
-            if party[0] == self.name:
-                global userlist
-                diction = userlist
-                user = diction.get(name)
-                if user in('', None):
-                    self.sendLine("Invalid user")
-                else:
-                    user.sendLine("%s has invited you to party..." % (self.name))
-                    user.sendLine("Do you accept? (yes/no)")
-                    user.state = "PartyResponse"
-                    party.append(name)
-                    user.party = party
-                    self.sendLine("Invite Sent")
+        try:
+            party = self.party
+            if party == []:
+                self.sendLine("Small party error... relog please")
             else:
-                self.sendLine("You are not the party leader")
+                if party[0] == self.name:
+                    global userlist
+                    diction = userlist
+                    user = diction.get(name)
+                    if user in('', None):
+                        self.sendLine("Invalid user")
+                    else:
+                        user.sendLine("%s has invited you to party..." % (self.name))
+                        user.sendLine("Do you accept? (yes/no)")
+                        user.state = "PartyResponse"
+                        party.append(name)
+                        user.party = party
+                        self.sendLine("Invite Sent")
+                else:
+                    self.sendLine("You are not the party leader")
+        except:
+            print "PartyInvite() Failed"
 
     def PartyLeave(self, reason=''):
-        if self.partybool is False:
-            if reason == 'Disconnect':
-                pass
-            else:
-                self.sendLine('No party to leave')
-        else:
-            party = self.party
-            try:
-                party[0]
-                countmax = 0
-            except:
-                pass
-            try:
-                party[1]
-                countmax = countmax + 1
-            except:
-                pass
-            try:
-                party[2]
-                countmax = countmax + 1
-            except:
-                pass
-            try:
-                party[3]
-                countmax = countmax + 1
-            except:
-                pass
-            try:
-                party[4]
-                countmax = countmax + 1
-            except:
-                pass
-            try:
-                party[5]
-                countmax = countmax + 1
-            except:
-                pass
-            global userlist
-            diction = userlist
-            count = 0
-            if countmax == 0:
-                return
-            while count <= countmax:
-                print "Stuck here"
-                member = party[count]
-                person = str(member)
-                if person == self.name:
-                    count += 1
+        try:
+            if self.partybool is False:
+                if reason == 'Disconnect':
+                    pass
                 else:
-                    member = diction.get(person)
-                    member.sendLine("(Party)%s has left the party" %(self.name))
-                    member.PartyCount()
-                    count += 1
-            member = party[0]
-            person = str(member)
-            member = diction.get(person)
-            memberparty = member.party
-            memberparty.remove(self.name)
-            self.party = []
-            party = self.party
-            party.append(self.name)
-            self.partybool = False
-            self.sendLine("You have left the party")
+                    self.sendLine('No party to leave')
+            else:
+                party = self.party
+                try:
+                    party[0]
+                    countmax = 0
+                except:
+                    pass
+                try:
+                    party[1]
+                    countmax = countmax + 1
+                except:
+                    pass
+                try:
+                    party[2]
+                    countmax = countmax + 1
+                except:
+                    pass
+                try:
+                    party[3]
+                    countmax = countmax + 1
+                except:
+                    pass
+                try:
+                    party[4]
+                    countmax = countmax + 1
+                except:
+                    pass
+                try:
+                    party[5]
+                    countmax = countmax + 1
+                except:
+                    pass
+                global userlist
+                diction = userlist
+                count = 0
+                if countmax == 0:
+                    return
+                while count <= countmax:
+                    print "Stuck here"
+                    member = party[count]
+                    person = str(member)
+                    if person == self.name:
+                        count += 1
+                    else:
+                        member = diction.get(person)
+                        member.sendLine("(Party)%s has left the party" %(self.name))
+                        member.PartyCount()
+                        count += 1
+                member = party[0]
+                person = str(member)
+                member = diction.get(person)
+                memberparty = member.party
+                memberparty.remove(self.name)
+                self.party = []
+                party = self.party
+                party.append(self.name)
+                self.partybool = False
+                self.sendLine("You have left the party")
+        except:
+            print "PartyLeave() failed for", self.name
 
     def PartyResponse(self, response):
-        party = self.party
-        global userlist
-        diction = userlist
-        if response in('n', 'no', 'No', 'N'):
-            leader = party[0]
-            leader = diction.get(leader)
-            leader.sendLine("%s has declined the party invite" % (self.name))
-            self.party = []
+        try:
             party = self.party
-            party.append(self.name)
+            global userlist
+            diction = userlist
+            if response in('n', 'no', 'No', 'N'):
+                leader = party[0]
+                leader = diction.get(leader)
+                leader.sendLine("%s has declined the party invite" % (self.name))
+                self.party = []
+                party = self.party
+                party.append(self.name)
+                self.state = "CHAT"
+            if response in('yes', 'y', 'Yes', 'Y'):
+                self.partybool = True
+                self.state = "CHAT"
+                self.sendLine("You have joined the party")
+                leader = party[0]
+                leader = diction.get(leader)
+                leader.partybool = True
+                leader.sendLine("%s has joined the party" % (self.name))
+        except:
+            print "Something happened in Party Response"
             self.state = "CHAT"
-        if response in('yes', 'y', 'Yes', 'Y'):
-            self.partybool = True
-            self.state = "CHAT"
-            self.sendLine("You have joined the party")
-            leader = party[0]
-            leader = diction.get(leader)
-            leader.partybool = True
-            leader.sendLine("%s has joined the party" % (self.name))
 
     def VitalBarDisplay(self, vital, value, maxvalue):
         value = float(value)
@@ -2311,24 +2436,30 @@ class Chat(LineReceiver):
             self.sendLine("Error : Either player is not online, or does not exist")
 
     def handle_WELCOME(self):
-        self.sendLine("Use /help for a reference")
-        name = self.name
-        self.users[name] = self
-        for name, protocol in self.users.iteritems():
-            if protocol != self:
-                message = "%s has joined" % (self.name,)
-                protocol.sendLine(message)
-        self.state = "CHAT"
-        self.displayExits()
-        self.Regeneration()
+        try:
+            self.sendLine("Use /help for a reference")
+            name = self.name
+            self.users[name] = self
+            for name, protocol in self.users.iteritems():
+                if protocol != self:
+                    message = "%s has joined" % (self.name,)
+                    protocol.sendLine(message)
+            self.state = "CHAT"
+            self.displayExits()
+            self.Regeneration()
+        except:
+            print "handle_Welcome() failed"
 
     def handle_DEATH(self, atk):
-        atk.health = atk.maxhealth
-        self.pkilled += 1
-        atk.sendLine("%s has killed you..." % (self.name))
-        atk.sendLine("You have been sent back to spawn...")
-        atk.room = 1
-        self.sendLine("You have killed %s! Your pk rating is now %s" % (atk.name, self.pk))
+        try:
+            atk.health = atk.maxhealth
+            self.pkilled += 1
+            atk.sendLine("%s has killed you..." % (self.name))
+            atk.sendLine("You have been sent back to spawn...")
+            atk.room = 1
+            self.sendLine("You have killed %s! Your pk rating is now %s" % (atk.name, self.pk))
+        except:
+            print "handle_DEATH() failed"
 
     def handle_PASSWORD(self, password):
         if(password == self.password):
@@ -2379,6 +2510,407 @@ class Chat(LineReceiver):
             self.sendLine("Now in admin mode")
         else:
             self.sendLine("Incorrect password, or no password entered...")
+# Create Room Sequence
+    def CreateRoom(self):
+        self.createroomid = ''
+        self.createroomdescrip = ''
+        self.createroomdescripN = ''
+        self.createroomdescripE = ''
+        self.createroomdescripS = ''
+        self.createroomdescripW = ''
+        self.createroomidN = ''
+        self.createroomidNsql = ''
+        self.createroomidE = ''
+        self.createroomidEsql = ''
+        self.createroomidS = ''
+        self.createroomidSsql = ''
+        self.createroomidW = ''
+        self.createroomidWsql = ''
+        self.createroomcoordx = ''
+        self.createroomcoordy = ''
+        self.createroomcoordz = ''
+        self.sendLine("At any point you can type /back to fix a previous error. Or /exit to leave this sequence")
+        self.sendLine("Enter Room ID")
+        self.state = "RoomIDCreate1"
+
+    def CreateRoom1(self, roomid):
+        try:
+            if roomid == '/back':
+                self.state = "CHAT"
+                self.sendLine("No error to return to, so exiting")
+                return
+            if roomid == '/exit':
+                self.state = "CHAT"
+                self.sendLine("Left room creation sequence")
+                return
+            if roomid == '':
+                self.sendLine("Invalid room entry")
+                return
+            global c
+            self.createroomid = roomid
+            createroomid = int(roomid)
+            c.execute('SELECT * FROM RoomExits WHERE ID=?', (createroomid,))
+            fetch = c.fetchone()
+            if fetch == None:
+                self.sendLine("Enter Room Description")
+                self.state = "RoomIDCreate2"
+            else:
+                self.sendLine("Room Exists, pick a different ID")
+        except:
+            self.sendLine("Error occured try again or relog")
+
+    def CreateRoom2(self, description):
+        try:
+            if description == '/back':
+                self.state = "RoomIDCreate1"
+                self.sendLine("Enter Room ID")
+                return
+            if description == '/exit':
+                self.state = "CHAT"
+                self.sendLine("Left room creation sequence")
+                return
+            if description == "":
+                self.sendLine("Needs some sort of description")
+                return
+            self.createroomdescrip = description
+            self.sendLine("Enter North Description (if none, then hit enter)")
+            self.state = "RoomIDCreate3"
+        except:
+            self.sendLine("Error occured try again or relog")
+
+    def CreateRoom3(self, description):
+        try:
+            if description == '/back':
+                self.state = "RoomIDCreate2"
+                self.sendLine("Enter Room Description")
+                return
+            if description == '/exit':
+                self.state = "CHAT"
+                self.sendLine("Left room creation sequence")
+                return
+            if description == '':
+                description = 'None'
+            self.createroomdescripN = description
+            self.sendLine("Enter East Description (if none, then hit enter)")
+            self.state = "RoomIDCreate4"
+        except:
+            self.sendLine("Error occured try again or relog")
+
+    def CreateRoom4(self, description):
+        try:
+            if description == '/back':
+                self.state = "RoomIDCreate3"
+                self.sendLine("Enter North Description (if none, then hit enter)")
+                return
+            if description == '/exit':
+                self.state = "CHAT"
+                self.sendLine("Left room creation sequence")
+                return
+            if description == '':
+                description = 'None'
+            self.createroomdescripE = description
+            self.sendLine("Enter South Description (if none, then hit enter)")
+            self.state = "RoomIDCreate5"
+        except:
+            self.sendLine("Error occured try again or relog")
+
+    def CreateRoom5(self, description):
+        try:
+            if description == '/back':
+                self.state = "RoomIDCreate4"
+                self.sendLine("Enter East Description (if none, then hit enter)")
+                return
+            if description == '/exit':
+                self.state = "CHAT"
+                self.sendLine("Left room creation sequence")
+                return
+            if description == '':
+                description = 'None'
+            self.createroomdescripS = description
+            self.sendLine("Enter West Description (if none, then hit enter)")
+            self.state = "RoomIDCreate6"
+        except:
+            self.sendLine("Error occured try again or relog")
+
+    def CreateRoom6(self, description):
+        try:
+            if description == '/back':
+                self.state = "RoomIDCreate5"
+                self.sendLine("Enter South Description (if none, then hit enter)")
+                return
+            if description == '/exit':
+                self.state = "CHAT"
+                self.sendLine("Left room creation sequence")
+                return
+            if description == '':
+                description = 'None'
+            self.createroomdescripW = description
+            self.sendLine("Enter Room ID to the North. If None, then leave blank")
+            self.state = "RoomIDCreate7"
+        except:
+            self.sendLine("Error occured try again or relog")
+
+    def CreateRoom7(self, room):
+        try:
+            if room == '/back':
+                self.state = "RoomIDCreate6"
+                self.sendLine("Enter West Description (if none, then hit enter)")
+                return
+            if room == '/exit':
+                self.state = "CHAT"
+                self.sendLine("Left room creation sequence")
+                return
+            if room in('', 'None'):
+                self.createroomidN = 'None'
+                self.createroomidNsql = None
+            else:
+                self.createroomidN = room
+                self.createroomidNsql = int(room)
+            self.sendLine("Enter Room ID to the East. If None, then leave blank")
+            self.state = "RoomIDCreate8"
+        except:
+            self.sendLine("Error occured try again or relog")
+
+    def CreateRoom8(self, room):
+        try:
+            if room == '/back':
+                self.state = "RoomIDCreate7"
+                self.sendLine("Enter Room ID to the North. If None, then leave blank")
+                return
+            if room == '/exit':
+                self.state = "CHAT"
+                self.sendLine("Left room creation sequence")
+                return
+            if room in('', 'None'):
+                self.createroomidE = 'None'
+                self.createroomidEsql = None
+            else:
+                self.createroomidE = room
+                self.createroomidEsql = int(room)
+            self.sendLine("Enter Room ID to the South. If None, then leave blank")
+            self.state = "RoomIDCreate9"
+        except:
+            self.sendLine("Error occured try again or relog")
+
+    def CreateRoom9(self, room):
+        try:
+            if room == '/back':
+                self.state = "RoomIDCreate8"
+                self.sendLine("Enter Room ID to the East. If None, then leave blank")
+                return
+            if room == '/exit':
+                self.state = "CHAT"
+                self.sendLine("Left room creation sequence")
+                return
+            if room in('', 'None'):
+                self.createroomidS = 'None'
+                self.createroomidSsql = None
+            else:
+                self.createroomidS = room
+                self.createroomidSsql = int(room)
+            self.sendLine("Enter Room ID to the West. If None, then leave blank")
+            self.state = "RoomIDCreate10"
+        except:
+            self.sendLine("Error occured try again or relog")
+
+    def CreateRoom10(self, room):
+        try:
+            if room == '/back':
+                self.state = "RoomIDCreate9"
+                self.sendLine("Enter Room ID to the South. If None, then leave blank")
+                return
+            if room == '/exit':
+                self.state = "CHAT"
+                self.sendLine("Left room creation sequence")
+                return
+            if room in('', 'None'):
+                self.createroomidW = 'None'
+                self.createroomidWsql = None
+            else:
+                self.createroomidW = room
+                self.createroomidWsql = int(room)
+            self.sendLine("Enter the X Coordinate")
+            self.state = "RoomIDCreate11"
+        except:
+            self.sendLine("Error occured try again or relog")
+
+    def CreateRoom11(self, coord):
+        try:
+            if coord == '/back':
+                self.state = "RoomIDCreate10"
+                self.sendLine("Enter Room ID to the West. If None, then leave blank")
+                return
+            if coord == '/exit':
+                self.state = "CHAT"
+                self.sendLine("Left room creation sequence")
+                return
+            if coord in(''):
+                self.sendLine("Invalid entry must have a coordinate")
+            else:
+                self.createroomcoordx = coord
+            self.sendLine("Enter the Y Coordinate")
+            self.state = "RoomIDCreate12"
+        except:
+            self.sendLine("Error occured try again or relog")
+
+    def CreateRoom12(self, coord):
+        try:
+            if coord == '/back':
+                self.state = "RoomIDCreate11"
+                self.sendLine("Enter the X Coordinate")
+                return
+            if coord == '/exit':
+                self.state = "CHAT"
+                self.sendLine("Left room creation sequence")
+                return
+            if coord in(''):
+                self.sendLine("Invalid entry must have a coordinate")
+            else:
+                self.createroomcoordy = coord
+            self.sendLine("Enter the Z Coordinate")
+            self.state = "RoomIDCreate13"
+        except:
+            self.sendLine("Error occured try again or relog")
+
+    def CreateRoom13(self, coord):
+        try:
+            if coord == '/back':
+                self.state = "RoomIDCreate12"
+                self.sendLine("Enter the Y Coordinate")
+                return
+            if coord == '/exit':
+                self.state = "CHAT"
+                self.sendLine("Left room creation sequence")
+                return
+            if coord in(''):
+                self.sendLine("Invalid entry must have a coordinate")
+            else:
+                self.createroomcoordz = coord
+            self.sendLine("Is the following information correct? (y/n)")
+            if self.createroomdescripN == 'None':
+                descripN = 'None'
+            else:
+                descripN = "'" + self.createroomdescripN + "'"
+            if self.createroomdescripE == 'None':
+                descripE = 'None'
+            else:
+                descripE = "'" + self.createroomdescripE + "'"
+            if self.createroomdescripS == 'None':
+                descripS = 'None'
+            else:
+                descripS = "'" + self.createroomdescripS + "'"
+            if self.createroomdescripW == 'None':
+                descripW = 'None'
+            else:
+                descripW = "'" + self.createroomdescripW + "'"
+            line = '(' + self.createroomid + ', "' + self.createroomdescrip + '", ' + descripN + ', ' + descripE + ', ' + descripS + ', ' + descripW + ', '+ self.createroomidN + ', ' + self.createroomidE + ', ' + self.createroomidS + ', ' + self.createroomidW + ', ' + self.createroomcoordx + ', ' + self.createroomcoordy + ', ' + self.createroomcoordz + ')'
+            self.sendLine(line)
+            self.state = "RoomIDCreateConfirm"
+        except:
+            self.sendLine("Error occured try again or relog")
+
+    def CreateRoomConfirm(self, answer):
+        try:
+            if coord == '/back':
+                self.state = "RoomIDCreate13"
+                self.sendLine("Enter the Z Coordinate")
+                return
+            if coord == '/exit':
+                self.state = "CHAT"
+                self.sendLine("Left room creation sequence")
+                return
+            if answer in('y', 'yes', 'Yes', 'Y'):
+                with open("roomentry.txt", "a") as myfile:
+                    if self.createroomdescripN == 'None':
+                        descripN = 'None'
+                    else:
+                        descripN = "'" + self.createroomdescripN + "'"
+                    if self.createroomdescripE == 'None':
+                        descripE = 'None'
+                    else:
+                        descripE = "'" + self.createroomdescripE + "'"
+                    if self.createroomdescripS == 'None':
+                        descripS = 'None'
+                    else:
+                        descripS = "'" + self.createroomdescripS + "'"
+                    if self.createroomdescripW == 'None':
+                        descripW = 'None'
+                    else:
+                        descripW = "'" + self.createroomdescripW + "'"
+                    saveline = '(' + self.createroomid + ', "' + self.createroomdescrip + '", ' + descripN + ', ' + descripE + ', ' + descripS + ', ' + descripW + ', '+ self.createroomidN + ', ' + self.createroomidE + ', ' + self.createroomidS + ', ' + self.createroomidW + ', ' + self.createroomcoordx + ', ' + self.createroomcoordy + ', ' + self.createroomcoordz + ')' + '\n'
+                    myfile.write(saveline)
+                if self.createroomdescripN == 'None':
+                    self.createroomdescripN = None
+                if self.createroomdescripE == 'None':
+                    self.createroomdescripE = None
+                if self.createroomdescripS == 'None':
+                    self.createroomdescripS = None
+                if self.createroomdescripW == 'None':
+                    self.createroomdescripW = None
+                room = (int(self.createroomid), self.createroomdescrip, self.createroomdescripN, self.createroomdescripE, self.createroomdescripS, self.createroomdescripW, self.createroomidNsql, self.createroomidEsql, self.createroomidSsql, self.createroomidWsql, int(self.createroomcoordx), int(self.createroomcoordy), int(self.createroomcoordz))
+                print room
+                c.execute('''INSERT INTO RoomExits VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''', room)
+                conn.commit()
+                self.sendLine("Entry saved and room commited!")
+                self.state = "CHAT"
+            if answer in('n', 'No', 'no', 'N'):
+                self.sendLine("Left creation, back in normal sequence")
+                self.state = "CHAT"
+        except:
+            self.sendLine("Error occured try again or relog")
+
+    def CreateRoomUpDown(self):
+        self.createroomid = ''
+        self.createroomup = ''
+        self.createroomdown = ''
+        self.sendLine("Enter Room ID")
+        self.state = "RoomIDCreateUpDown1"
+
+    def CreateRoomUpDown1(self, roomid):
+        if roomid == '':
+            self.sendLine("Invalid room entry")
+            return
+        global c
+        self.createroomid = roomid
+        createroomid = int(roomid)
+        c.execute('SELECT * FROM RoomExits WHERE ID=?', (createroomid,))
+        fetch = c.fetchone()
+        if fetch == None:
+            self.sendLine("Enter room that is up (If none leave blank)")
+            self.state = "RoomIDCreateUpDown2"
+        else:
+            self.sendLine("Room Exists, pick a different ID")
+
+    def CreateRoomUpDown2(self, room):
+        if room == "":
+            self.createroomup = None
+        else:
+            self.createroomup = room
+        self.sendLine("Enter room that is down (If none leave blank)")
+        self.state = "RoomIDCreateUpDown3"
+
+    def CreateRoomUpDown2(self, room):
+        if room == "":
+            self.createroomdown = None
+        else:
+            self.createroomdown = room
+        self.sendLine("Is this correct?")
+        line = '(' + self.createroomid + ', ' + self.createroomup + ', ' + self.createroomdown + ')'
+        self.state = "RoomIDCreateUpDownConfirm"
+
+    def CreateRoomUpDownConfirm(self, answer):
+        if answer in('y', 'yes', 'Yes', 'Y'):
+            with open("roomupdownentry.txt", "a") as myfile:
+                line = '(' + self.createroomid + ', ' + self.createroomup + ', ' + self.createroomdown + ')'
+                myfile.write(saveline)
+            room = (int(self.createroomid), int(self.createroomup), int(self.createroomdown))
+            c.execute('''INSERT INTO RoomUpDown VALUES (?,?,?)''', room)
+            conn.commit()
+            self.sendLine("Entry saved and room commited!")
+            self.state = "CHAT"
+        if answer in('n', 'No', 'no', 'N'):
+            self.sendLine("Left creation, back in normal sequence")
+            self.state = "CHAT"
 
     def Teleport(self, room):
         try:
@@ -2389,7 +2921,6 @@ class Chat(LineReceiver):
             self.updateRoom('Teleport', 'Teleport')
             self.displayExits()
         except ValueError:
-            print("Recived name")
             player = str(room)
             self.handle_CLEARSCREEN()
             global userlist
@@ -2404,26 +2935,32 @@ class Chat(LineReceiver):
                 self.displayExits()
 
     def List(self):
-        global userlist
-        diction = userlist
-        for key, value in diction.iteritems():
-            player = diction.get(key)
-            name = player.name
-            level = player.level
-            classname = player.classname
-            regionname = player.regionname
-            self.sendLine("%s, Level %s, %s   [%s]" % (name, level, classname, regionname))
+        try:
+            global userlist
+            diction = userlist
+            for key, value in diction.iteritems():
+                player = diction.get(key)
+                name = player.name
+                level = player.level
+                classname = player.classname
+                regionname = player.regionname
+                self.sendLine("%s, Level %s, %s   [%s]" % (name, level, classname, regionname))
+        except:
+            print "List() failed"
 
     def Stop(self, reason):
-        global userlist
-        diction = userlist
-        line = "###SERVER### : Server is being stopped in 30 seconds for : " + reason
-        for key, value in diction.iteritems():
-            player = diction.get(key)
-            player.sendLine(line)
-            player.sendLine("Please get somewhere safe...")
-        print "SERVER called to stop by...", self.name
-        reactor.callLater(3.0, self.StopAll)
+        try:
+            global userlist
+            diction = userlist
+            line = "###SERVER### : Server is being stopped in 30 seconds for : " + reason
+            for key, value in diction.iteritems():
+                player = diction.get(key)
+                player.sendLine(line)
+                player.sendLine("Please get somewhere safe...")
+            print "SERVER called to stop by...", self.name
+            reactor.callLater(3.0, self.StopAll)
+        except:
+            print "Stop() Didn't work'"
 
     def StopAll(self):
         try:
@@ -2431,7 +2968,6 @@ class Chat(LineReceiver):
             diction = userlist
             for key, value in diction.iteritems():
                 player = diction.get(key)
-                print player
                 player.EXIT()
             reactor.callLater(3.0, StopAll)
         except:
@@ -2581,7 +3117,7 @@ class Chat(LineReceiver):
         self.constitution += 1
 
 
-    def offensiveStance(): #level 7, toggle
+    def warriorStance(): #level 7, toggle
         print "in progress"
         #125% Defense
         #75% Attack
@@ -2589,6 +3125,7 @@ class Chat(LineReceiver):
 #########
 # Rogue #
 #########
+
 
 ############### ROGUE ####################
     def doubleStrike(self, target): #level 1, 8MP
@@ -2979,6 +3516,7 @@ class Chat(LineReceiver):
                 # self.sendLine("/c                   *Return back to command mode")
                 self.sendLine("/changepass          *Changes your password")
                 self.sendLine("/clear               *clears the screen of text")
+                self.sendLine("/create (room or roomupdown)")
                 self.sendLine("/equipped            *Looks up personal gear equipped")
                 self.sendLine("/exit                *exit cleanly and save properly")
                 self.sendLine("/inv                 *Opens your inventory")
@@ -3010,6 +3548,16 @@ class Chat(LineReceiver):
         if(message == '/skills'):
             self.Skilllist()
             return
+        if(message == '/create room'):
+            if self.adminmode == False:
+                return
+            else:
+                self.CreateRoom()
+        if(message == '/create roomupdown'):
+            if self.adminmode == False:
+                return
+            else:
+                self.CreateRoomUpDown()
         if(message == '/stats'):
             self.STATS()
             return
@@ -3151,7 +3699,7 @@ class Chat(LineReceiver):
             message = message[1:]
             self.Shout(message)
         else:
-            if(message[0:1] != '/'):
+            if(message[0:1] == " "):
                 message = message[0:]
                 self.handle_SAY(message)
 
@@ -3904,7 +4452,7 @@ class MobSpawner():
         health = int(health)
         health2 = int(health2)
         health = health + health2
-        attack = strength * 2
+        attack = strength * 3
         strdmg = strength / 8.0
         strdmg = int(strdmg)
         defence = constitution * 2
