@@ -5,9 +5,11 @@ from twisted.internet import task
 import sys
 sys.path.insert(0, 'C:\Users\Ben\Downloads\DatabaseInformation')
 import Databasecreate
+import Databasecreate2
 import random
 import sqlite3
 import string
+import time
 
 global c
 global __name__
@@ -5007,11 +5009,11 @@ class DayNight():
             player = diction.get(key)
             player.sendLine("TIME : The sun begins to rise")
 
-time = task.LoopingCall(DayNight)
-time.start(4.0)
+print "Server Started at localhost on Port : 8123"
+timer = task.LoopingCall(DayNight)
+timer.start(4.0)
 l = task.LoopingCall(MobSpawner)
 l.start(10.0)
-print "Server Started at localhost on Port : 8123"
 reactor.listenTCP(8123, ChatFactory())
 reactor.run()
 
@@ -5037,9 +5039,10 @@ def EmptyRooms():
                     counter += 1
         count10 += 1
 
-print "Closed!"
+print "Server has been stopped!"
+print "Window will close in 3 seconds"
 EmptyRooms()
 conn.commit()
-c.close()
-print "Hit enter to close the window"
-enter = raw_input()
+Databasecreate2.Import()
+time.sleep(3)
+sys.exit()
