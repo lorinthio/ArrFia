@@ -1,10 +1,10 @@
 global items
 
-items = [    (1, 'Rusty Sword', 'Main', 1, 6, 3.0),
+items = [    (1, 'Rusty Sword', 'Main', 1, 6, 2.5),
              (2, 'Rusty Shield', 'Shield', 4, 4, 0.0),
              (3, 'Rusty Dagger', 'Main', 1, 4, 2.0),
              (4, 'Rusty Dirk', 'Weapon', 1, 3, 2.0),
-             (5, 'Rusty Mace', 'Main', 1, 5, 2.5),
+             (5, 'Rusty Mace', 'Main', 1, 5, 2.8),
              (6, 'Knobbed Staff', 'Main', 1, 6, 3.0),
              (7, 'Chain Shirt', 'Body', 4, 4, 0),
              (8, 'Chain Pants', 'Lowerbody', 3, 3, 0),

@@ -10,13 +10,25 @@ import random
 import sqlite3
 import string
 import time
+import datetime
 
 global c
 global __name__
 global userlist
+global localtime
 
-conn = sqlite3.connect('MUD.db')
+conn = sqlite3.connect('Primary_Database.db')
 c = conn.cursor()
+
+def LocalTime():
+    global localtime
+    ltime = time.localtime()
+    Hour = str(ltime[3])
+    Minute = str(ltime[4])
+    Second = str(ltime[5])
+    localtime =  "[" + Hour + ":" + Minute + ":" + Second + "]"
+    return localtime
+
 try:
     c.execute("Select * From ServerTime")
 except:
@@ -27,7 +39,6 @@ userlist = {}
 def StopAll():
     print "Everyone disconnected, safe to close..."
     reactor.stop()
-
 
 class Chat(LineReceiver):
 
@@ -87,27 +98,36 @@ class Chat(LineReceiver):
         self.state = ''
         self.whisper = ""
         self.attack = 0
+        self.normalattack = 0
         self.defence = 0
+        self.normaldefence = 0
         self.mattack = 0
+        self.damageresist = 0
+        self.magicresist = 0
         self.mdefence = 0
         self.dodge = 0
         self.spot = 0
         self.sneak = 0
         self.accuracy = 0
+        self.magicaccuracy = 0
+        self.magicdodge = 0
         self.critical = 0
         self.speedmod = 0
         self.strengthdamage = 0
+        self.magicdamage = 0
         self.attackspeed = 0
         self.attackready = True
         self.attributepoints = 0
         self.skillpoints = 0
         self.suicide = True
         self.threatmultiplier = 10
+        self.gender = ''
         # This is where players will access each others info through this party dictionary
         self.party = []
         self.partybool = False
         self.permission = 'Member'        # Member, Moderator, Admin, Server
         self.adminmode = False
+
         ### INVENTORY
         self.gold = 0
         self.slot1 = 0
@@ -154,7 +174,14 @@ class Chat(LineReceiver):
         self.xcoord = 0
         self.ycoord = 0
         self.zcoord = 0
-        self.spelllist = {}
+
+        # Skill Cooldowns
+#        self.skilldict = {1= 'self.skill1 = True', 2= 'self.skill2 = True', 3= 'self.skill3 = True', 4='self.skill4 = True', 5='self.skill5 = True'}
+        self.skill1 = True
+        self.skill2 = True
+        self.skill3 = True
+        self.skill4 = True
+        self.skill5 = True
 
         # ADVENTURE SKILLS
         self.Climbing = 1
@@ -182,6 +209,21 @@ class Chat(LineReceiver):
         self.Building = 1
         self.Buildingtnl = 100
 
+        # Bonus Stats
+        self.maxhealthbonus = 0
+        self.maxmanabonus = 0
+        self.healthregenbonus = 0
+        self.manaregenbonus = 0
+        self.criticalbonus = 0
+        self.dodgebonus = 0
+        self.strengthdamagebonus = 0
+        self.magicdamagebonus = 0
+        self.damageresistbonus = 0
+        self.magicresistbonus = 0
+        self.accuracybonus = 0
+        self.magicaccuracybonus = 0
+        self.magicdodgebonus = 0
+
         # Admin Room Creation Slots
         self.createroomid = ''
         self.createroomdescrip = ''
@@ -202,30 +244,33 @@ class Chat(LineReceiver):
         self.createroomcoordz = ''
         self.createroomup = ''
         self.createroomdown = ''
+        self.updateroom = ''
+        self.updateroominfo = ''
 
     def connectionMade(self):
-        self.sendLine("====================================================================")
-        self.sendLine('====================================================================')
-        self.sendLine('        ##                             #     /##                    ')
-        self.sendLine('     /####                            ###   #/ ###   #              ')
-        self.sendLine('    /  ###                            #    ##   ### ###             ')
-        self.sendLine('       /##                                ##        #               ')
-        self.sendLine('      /  ##                               ##                        ')
-        self.sendLine('      /  ##     ###  /###   ###  /###   / ######  ###       /###    ')
-        self.sendLine('     /    ##     ###/ #### / ###/ #### /  #####    ###     / ###  / ')
-        self.sendLine('     /    ##      ##   ###/   ##   ###/   ##        ##    /   ###/  ')
-        self.sendLine('    /      ##     ##          ##          ##        ##   ##    ##   ')
-        self.sendLine('    /########     ##          ##          ##        ##   ##    ##   ')
-        self.sendLine('   /        ##    ##          ##          ##        ##   ##    ##   ')
-        self.sendLine('   #        ##    ##          ##          ##        ##   ##    ##   ')
-        self.sendLine('  /####      ##   ##          ##          ##        ##   ##    /#   ')
-        self.sendLine(' /   ####    ## / ###         ###         ##        ### / ####/ ##  ')
-        self.sendLine('/     ##      #/   ###         ###         ##        ##/   ###   ## ')
-        self.sendLine("====================================================================")
-        self.sendLine('====================================================================')
+        self.sendLine("    |^^^|                                                                       ")
+        self.sendLine("     }_{    ====================================================================")
+        self.sendLine('     }_{    ====================================================================')
+        self.sendLine(' /|_/---\_|\        ##                             #     /##                   ')
+        self.sendLine(' I _|\_/|_ I     /####                            ###   #/ ###   #             ')
+        self.sendLine(' \| | | | |/    /  ###                            #    ##   ### ###            ')
+        self.sendLine('    | | |          /##                                ##        #               ')
+        self.sendLine("    | | |         /  ##                               ##                  ")
+        self.sendLine("    | | |         /  ##     ###  /###   ###  /###   / ######  ###       /###   ")
+        self.sendLine('    | | |        /    ##     ###/ #### / ###/ #### /  #####    ###     / ###  /')
+        self.sendLine('    | | |        /    ##      ##   ###/   ##   ###/   ##        ##    /   ###/  ')
+        self.sendLine('    |   |       /      ##     ##          ##          ##        ##   ##    ##   ')
+        self.sendLine('    |   |       /########     ##          ##          ##        ##   ##    ##   ')
+        self.sendLine('    |   |      /        ##    ##          ##          ##        ##   ##    ##   ')
+        self.sendLine('    |   |      #        ##    ##          ##          ##        ##   ##    ##   ')
+        self.sendLine('    |   |     /####      ##   ##          ##          ##        ##   ##    /#   ')
+        self.sendLine('    |   |    /   ####    ## / ###         ###         ##        ### / ####/ ##  ')
+        self.sendLine('    |   |   /     ##      #/   ###         ###         ##        ##/   ###   ##')
+        self.sendLine("     \ /    ====================================================================")
+        self.sendLine('      Y     ====================================================================')
         self.sendLine("Successfully connected to Arr'Fia!")
         self.sendLine("If you don't have a username hit enter to create an account!'")
-        self.sendLine("Otherwise just login as normal")
+        self.sendLine("Otherwise just login as usual")
         self.sendLine("")
         self.sendLine("Username :")
         self.state = "LOGINCHECK"
@@ -251,250 +296,298 @@ class Chat(LineReceiver):
         if self.users.has_key(self.name):
             message = "%s has disconnected" % (self.name)
             del self.users[self.name]
-            print (message)
+            LocalTime()
+            global localtime
+            print localtime, message
             for name, protocol in self.users.iteritems():
                 protocol.sendLine(message)
+        self.stae = 'DISCONNECTED'
 
 # LOAD / SAVE SCRIPTS
     def LOAD(self):
-        try:
-            global c
-            t = str(self.name)
-            t = (t,)
-            c.execute('SELECT * FROM Placement WHERE Name=?', t)
+#        try:
+        global c
+        t = str(self.name)
+        t = (t,)
+        c.execute('SELECT * FROM Placement WHERE Name=?', t)
+        test = c.fetchone()
+        if(test == None):
+            print self.name, "has no room placing in spawn..."
+            self.room = 1
+            self.lastroom = 0
+            self.xcoord = 0
+            self.ycoord = 0
+            self.zcoord = 0
+            room = self.room
+            roomc = (room,)
+            c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
+            test = c.fetchone()
+            count = 1
+            while count <= 20:
+                if test[count] not in('', None, 'None'):
+                    count = count + 1
+                else:
+                    column = "'Slot" + str(count) + "'"
+                    c.execute("UPDATE RoomPlayers SET " + column + "=? WHERE ID=?", (self.name, room))
+                    self.lastroom = room
+                    self.placement = count
+                    self.room = room
+                    conn.commit()
+                    count = 30
+            conn.commit()
+            c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
+            test = c.fetchone()
+        else:
+            self.room = test[1]
+            self.lastroom = self.room
+            room = self.room
+            roomc = (self.room,)
+            c.execute('''SELECT * FROM RoomExits WHERE ID=?''', roomc)
+            roomfetch = c.fetchone()
+            self.xcoord = int(roomfetch[10])
+            self.ycoord = int(roomfetch[11])
+            self.zcoord = int(roomfetch[12])
+            c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
+            test = c.fetchone()
+            count = 1
+            while count <= 20:
+                if test[count] not in('', None, 'None'):
+                    count = count + 1
+                else:
+                    column = "'Slot" + str(count) + "'"
+                    c.execute("UPDATE RoomPlayers SET " + column + "=? WHERE ID=?", (self.name, room))
+                    self.lastroom = room
+                    self.placement = count
+                    self.room = room
+                    conn.commit()
+                    count = 30
+            conn.commit()
+            c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
+            test = c.fetchone()
+        c.execute('SELECT * FROM Character WHERE Name=?', t)
+        test = c.fetchone()
+        if(test == None):
+            print self.name, "has no stats, So no character? Placing in creation sequence..."
+            self.handle_CLEARSCREEN
+            self.sendLine("***WARNING*** Do not leave during this process! it won't take long!")
+            self.RACELIST()
+            self.state = "RACESTART"
+            return
+        if(test != None):
+            #Name, Class, Level, Exp, Exptnl, Strength, Constitution, Dexterity, Agility, Wisdom, Intellegence
+            self.classname = str(test[1])
+            self.level = test[2]
+            self.exp = test[3]
+            self.exptnl = test[4]
+            self.strength = test[5]
+            self.constitution = test[6]
+            self.dexterity = test[7]
+            self.agility = test[8]
+            self.wisdom = test[9]
+            self.intellegence = test[10]
+            self.race = str(test[11])
+            self.gender = str(test[12])
+            self.StatCreation()
+            c.execute('SELECT * FROM Vitals WHERE Name=?', t)
             test = c.fetchone()
             if(test == None):
-                print self.name, "has no room placing in spawn..."
-                self.room = 1
-                self.lastroom = 0
-                self.xcoord = 0
-                self.ycoord = 0
-                self.zcoord = 0
-                room = self.room
-                roomc = (room,)
-                c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
-                test = c.fetchone()
-                count = 1
-                while count <= 20:
-                    if test[count] not in('', None, 'None'):
-                        count = count + 1
-                    else:
-                        column = "'Slot" + str(count) + "'"
-                        c.execute("UPDATE RoomPlayers SET " + column + "=? WHERE ID=?", (self.name, room))
-                        self.lastroom = room
-                        self.placement = count
-                        self.room = room
-                        conn.commit()
-                        count = 30
-                conn.commit()
-                c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
-                test = c.fetchone()
-            else:
-                self.room = test[1]
-                self.lastroom = self.room
-                room = self.room
-                if (self.room >= 1) and (self.room <= 12):
-                    self.regionname = 'Exordior'
-                if (self.room >= 13) and (self.room <= 29):
-                    self.regionname = 'Cave of Exordior'
-                if (self.room >= 30) and (self.room <= 64):
-                    self.regionname = 'Exordior Mine'
-                roomc = (self.room,)
-                c.execute('''SELECT * FROM RoomExits WHERE ID=?''', roomc)
-                roomfetch = c.fetchone()
-                self.xcoord = int(roomfetch[10])
-                self.ycoord = int(roomfetch[11])
-                self.zcoord = int(roomfetch[12])
-                c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
-                test = c.fetchone()
-                count = 1
-                while count <= 20:
-                    if test[count] not in('', None, 'None'):
-                        count = count + 1
-                    else:
-                        column = "'Slot" + str(count) + "'"
-                        c.execute("UPDATE RoomPlayers SET " + column + "=? WHERE ID=?", (self.name, room))
-                        self.lastroom = room
-                        self.placement = count
-                        self.room = room
-                        conn.commit()
-                        count = 30
-                conn.commit()
-                c.execute('''SELECT * FROM RoomPlayers WHERE ID=?''', roomc)
-                test = c.fetchone()
-            c.execute('SELECT * FROM Character WHERE Name=?', t)
-            test = c.fetchone()
-            if(test == None):
-                print self.name, "has no stats, So no character? Placing in creation sequence..."
-                self.handle_CLEARSCREEN
-                self.sendLine("***WARNING*** Do not leave during this process! it won't take long!")
-                self.RACELIST()
-                self.state = "RACESTART"
-                return
+                print self.name, "has no vitals saved, setting to max vitals"
+                self.health = self.maxhealth
+                self.mana = self.maxmana
             if(test != None):
-                #Name, Class, Level, Exp, Exptnl, Strength, Constitution, Dexterity, Agility, Wisdom, Intellegence
-                self.classname = str(test[1])
-                self.level = test[2]
-                self.exp = test[3]
-                self.exptnl = test[4]
-                self.strength = test[5]
-                self.constitution = test[6]
-                self.dexterity = test[7]
-                self.agility = test[8]
-                self.wisdom = test[9]
-                self.intellegence = test[10]
-                self.race = str(test[11])
-                self.StatCreation()
-                c.execute('SELECT * FROM Vitals WHERE Name=?', t)
+                self.health = test[1]
+                self.mana = test[2]
+                self.sendLine("Character Successfully Loaded")
+                c.execute('SELECT * FROM Equipment WHERE Name=?', t)
                 test = c.fetchone()
                 if(test == None):
-                    print self.name, "has no vitals saved, setting to max vitals"
-                    self.health = self.maxhealth
-                    self.mana = self.maxmana
+                    print self.name, "has no equipment!"
                 if(test != None):
-                    self.health = test[1]
-                    self.mana = test[2]
-                    self.sendLine("Character Successfully Loaded")
-                    c.execute('SELECT * FROM Equipment WHERE Name=?', t)
+                    self.mainhandid = test[1]
+                    self.offhandid = test[2]
+                    self.helmetid = test[3]
+                    self.bodyid = test[4]
+                    self.lowerbodyid = test[5]
+                    self.bootsid = test[6]
+                    self.EQUIPSTART()
+                    c.execute('SELECT * FROM Inventory WHERE Name=?', t)
                     test = c.fetchone()
                     if(test == None):
-                        print self.name, "has no equipment!"
+                        print self.name, "has no inventory!"
                     if(test != None):
-                        self.mainhandid = test[1]
-                        self.offhandid = test[2]
-                        self.helmetid = test[3]
-                        self.bodyid = test[4]
-                        self.lowerbodyid = test[5]
-                        self.bootsid = test[6]
-                        self.EQUIPSTART()
-                        c.execute('SELECT * FROM Inventory WHERE Name=?', t)
-                        test = c.fetchone()
-                        if(test == None):
-                            print self.name, "has no inventory!"
-                        if(test != None):
-                            self.slot1 = int(test[1])
-                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot1,))
-                            fetch = c.fetchone()
-                            if fetch != None:
-                                self.slot1name = str(fetch[1])
-                            self.slot2 = int(test[2])
-                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot2,))
-                            fetch = c.fetchone()
-                            if fetch != None:
-                                self.slot2name = str(fetch[1])
-                            self.slot3 = int(test[3])
-                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot3,))
-                            fetch = c.fetchone()
-                            if fetch != None:
-                                self.slot3name = str(fetch[1])
-                            self.slot4 = int(test[4])
-                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot4,))
-                            fetch = c.fetchone()
-                            if fetch != None:
-                                self.slot4name = str(fetch[1])
-                            self.slot5 = int(test[5])
-                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot5,))
-                            fetch = c.fetchone()
-                            if fetch != None:
-                                self.slot5name = str(fetch[1])
-                            self.slot6 = int(test[6])
-                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot6,))
-                            fetch = c.fetchone()
-                            if fetch != None:
-                                self.slot6name = str(fetch[1])
-                            self.slot7 = int(test[7])
-                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot7,))
-                            fetch = c.fetchone()
-                            if fetch != None:
-                                self.slot7name = str(fetch[1])
-                            self.slot8 = int(test[8])
-                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot8,))
-                            fetch = c.fetchone()
-                            if fetch != None:
-                                self.slot8name = str(fetch[1])
-                            self.slot9 = int(test[9])
-                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot9,))
-                            fetch = c.fetchone()
-                            if fetch != None:
-                                self.slot9name = str(fetch[1])
-                            self.slot10 = int(test[10])
-                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot10,))
-                            fetch = c.fetchone()
-                            if fetch != None:
-                                self.slot10name = str(fetch[1])
-                            self.slot11 = int(test[11])
-                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot11,))
-                            fetch = c.fetchone()
-                            if fetch != None:
-                                self.slot11name = str(fetch[1])
-                            self.slot12 = int(test[12])
-                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot12,))
-                            fetch = c.fetchone()
-                            if fetch != None:
-                                self.slot12name = str(fetch[1])
-                            self.slot13 = int(test[13])
-                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot13,))
-                            fetch = c.fetchone()
-                            if fetch != None:
-                                self.slot13name = str(fetch[1])
-                            self.slot14 = int(test[14])
-                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot14,))
-                            fetch = c.fetchone()
-                            if fetch != None:
-                                self.slot14name = str(fetch[1])
-                            self.slot15 = int(test[15])
-                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot15,))
-                            fetch = c.fetchone()
-                            if fetch != None:
-                                self.slot15name = str(fetch[1])
-                            self.slot16 = int(test[16])
-                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot16,))
-                            fetch = c.fetchone()
-                            if fetch != None:
-                                self.slot16name = str(fetch[1])
-                            self.slot17 = int(test[17])
-                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot17,))
-                            fetch = c.fetchone()
-                            if fetch != None:
-                                self.slot17name = str(fetch[1])
-                            self.slot18 = int(test[18])
-                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot18,))
-                            fetch = c.fetchone()
-                            if fetch != None:
-                                self.slot18name = str(fetch[1])
-                            self.slot19 = int(test[19])
-                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot19,))
-                            fetch = c.fetchone()
-                            if fetch != None:
-                                self.slot19name = str(fetch[1])
-                            self.slot20 = int(test[20])
-                            c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot20,))
-                            fetch = c.fetchone()
-                            if fetch != None:
-                                self.slot20name = str(fetch[1])
-                            self.gold = test[21]
-                    party = self.party
-                    party.append(self.name)
-                    member = str(self)
-                    name = unicode(self.name)
-                    c.execute('''UPDATE ID SET ChatInstance=? WHERE Name=?''', (member, name))
+                        self.slot1 = int(test[1])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot1,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot1name = str(fetch[1])
+                        self.slot2 = int(test[2])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot2,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot2name = str(fetch[1])
+                        self.slot3 = int(test[3])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot3,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot3name = str(fetch[1])
+                        self.slot4 = int(test[4])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot4,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot4name = str(fetch[1])
+                        self.slot5 = int(test[5])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot5,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot5name = str(fetch[1])
+                        self.slot6 = int(test[6])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot6,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot6name = str(fetch[1])
+                        self.slot7 = int(test[7])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot7,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot7name = str(fetch[1])
+                        self.slot8 = int(test[8])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot8,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot8name = str(fetch[1])
+                        self.slot9 = int(test[9])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot9,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot9name = str(fetch[1])
+                        self.slot10 = int(test[10])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot10,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot10name = str(fetch[1])
+                        self.slot11 = int(test[11])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot11,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot11name = str(fetch[1])
+                        self.slot12 = int(test[12])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot12,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot12name = str(fetch[1])
+                        self.slot13 = int(test[13])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot13,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot13name = str(fetch[1])
+                        self.slot14 = int(test[14])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot14,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot14name = str(fetch[1])
+                        self.slot15 = int(test[15])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot15,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot15name = str(fetch[1])
+                        self.slot16 = int(test[16])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot16,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot16name = str(fetch[1])
+                        self.slot17 = int(test[17])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot17,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot17name = str(fetch[1])
+                        self.slot18 = int(test[18])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot18,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot18name = str(fetch[1])
+                        self.slot19 = int(test[19])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot19,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot19name = str(fetch[1])
+                        self.slot20 = int(test[20])
+                        c.execute('SELECT * FROM Gear WHERE ID=?', (self.slot20,))
+                        fetch = c.fetchone()
+                        if fetch != None:
+                            self.slot20name = str(fetch[1])
+                        self.gold = test[21]
+                party = self.party
+                party.append(self.name)
+                member = str(self)
+                c.execute('SELECT * FROM PlayerBonusStats WHERE Name=?', (self.name,))
+                fetch = c.fetchone()
+                if fetch != None:
+                    self.maxhealthbonus = fetch[1]
+                    self.maxhealth += self.maxhealthbonus
+                    self.maxmanabonus = fetch[2]
+                    self.maxmana += self.maxmanabonus
+                    self.healthregenbonus = fetch[3]
+                    self.healthregen += self.healthregenbonus
+                    self.manaregenbonus = fetch[4]
+                    self.manaregen += self.manaregenbonus
+                    self.criticalbonus = fetch[5]
+                    self.critical = self.critical + self.criticalbonus
+                    self.dodgebonus = fetch[6]
+                    self.dodge += self.dodgebonus
+                    self.strengthdamagebonus = fetch[7]
+                    self.strengthdamage += self.strengthdamagebonus
+                    self.magicdamagebonus = fetch[8]
+                    self.magicdamage += self.magicdamagebonus
+                    self.damageresistbonus = fetch[9]
+                    self.damageresist += self.damageresistbonus
+                    self.magicresistbonus = fetch[10]
+                    self.magicresist += self.magicresistbonus
+                    self.accuracybonus = fetch[11]
+                    self.accuracy += self.accuracybonus
+                    self.magicaccuracybonus = fetch[12]
+                    self.magicaccuracy += self.magicaccuracybonus
+                    self.magicdodgebonus = fetch[13]
+                    self.magicdodge += self.magicdodgebonus
+                else:
+                    a = self.name
+                    b = self.maxhealthbonus
+                    cc = self.maxmanabonus
+                    d = self.healthregenbonus
+                    e = self.manaregenbonus
+                    f = self.criticalbonus
+                    g = self.dodgebonus
+                    h = self.strengthdamagebonus
+                    i = self.magicdamagebonus
+                    j = self.damageresistbonus
+                    k = self.magicresistbonus
+                    l = self.accuracybonus
+                    m = self.magicaccuracybonus
+                    n = self.magicdodgebonus
+                    bonus = (a, b, cc, d, e, f, g, h, i, j, k, l, m, n)
+                    c.execute("INSERT INTO PlayerBonusStats VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", bonus)
                     conn.commit()
-                    name = (self.name,)
-                    c.execute('''SELECT * FROM PlayerSkills WHERE Name=?''', name)
-                    fetch = c.fetchone()
-                    if fetch == None:
-                        print "Skills not found for", self.name
-                    else:
-                        self.Climbing = int(fetch[1])
-                        self.Climbingtnl = int(fetch[2])
-                        self.Sneakskill = int(fetch[3])
-                        self.Sneakskilltnl = int(fetch[4])
-                    print self.name, "has joined the server"
-                    global userlist
-                    userlist[self.name] = self
-                    self.handle_WELCOME()
-        except:
-            print "Error with LOAD()"
+                    print 'Created Bonus Stat Entry for', self.name
+                name = unicode(self.name)
+                c.execute('''UPDATE ID SET ChatInstance=? WHERE Name=?''', (member, name))
+                conn.commit()
+                name = (self.name,)
+                c.execute('''SELECT * FROM PlayerSkills WHERE Name=?''', name)
+                fetch = c.fetchone()
+                if fetch == None:
+                    print "Skills not found for", self.name
+                else:
+                    self.Climbing = int(fetch[1])
+                    self.Climbingtnl = int(fetch[2])
+                    self.Sneakskill = int(fetch[3])
+                    self.Sneakskilltnl = int(fetch[4])
+                LocalTime()
+                global localtime
+                print localtime, self.name, "has joined the server"
+                global userlist
+                userlist[self.name] = self
+                self.handle_WELCOME()
+#        except:
+#            print "Error with LOAD()"
 
     def SAVE(self):
         try:
@@ -584,6 +677,22 @@ class Chat(LineReceiver):
             v = self.Woodcuttingtnl
             skills = (b, cc, d, e, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, a)
             c.execute('UPDATE PlayerSkills SET Climblevel=?, ClimbExp=?, Sneaklevel=?, SneakExp=?, Swimlevel=?, SwimExp=?, Foragelevel=?, ForageExp=?, Logginglevel=?, LoggingExp=?, Mininglevel=?, MiningExp=?, Buildinglevel=?, BuildingExp=?, Stonecuttinglevel=?, StonecuttingExp=?, Tanninglevel=?, TanningExp=?, Woodlevel=?, Woodexp=? WHERE Name=?', skills)
+            a = self.name
+            b = self.maxhealthbonus
+            cc = self.maxmanabonus
+            d = self.healthregenbonus
+            e = self.manaregenbonus
+            f = self.criticalbonus
+            g = self.dodgebonus
+            h = self.strengthdamagebonus
+            i = self.magicdamagebonus
+            j = self.damageresistbonus
+            k = self.magicresistbonus
+            l = self.accuracybonus
+            m = self.magicaccuracybonus
+            n = self.magicdodgebonus
+            bonus = (b, cc, d, e, f, g, h, i, j, k, l, m, n,a)
+            c.execute("UPDATE PlayerBonusStats SET Maxhealth=?, MaxMana=?, HpRegen=?, MpRegen=?, Critical=?, Dodge=?, StrDmg=?, IntDmg=?, PhsDmgResist=?, MagDmgResist=?, Accuracy=?, MagicAccuracy=?, MagicDodge=? WHERE Name=?", bonus)
             self.sendLine('Save Successful!')
             conn.commit()
         except:
@@ -610,9 +719,10 @@ class Chat(LineReceiver):
             j = self.intellegence
             k = self.name
             n = self.race
-            a = (k, l, b, cc, d, e, f, g, h, i, j, n,)
+            m = self.gender
+            a = (k, l, b, cc, d, e, f, g, h, i, j, n, m)
             # try:
-            c.execute('INSERT INTO Character VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', a)
+            c.execute('INSERT INTO Character VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)', a)
             b = self.mainhandid
             cc = self.offhandid
             d = self.helmetid
@@ -677,8 +787,25 @@ class Chat(LineReceiver):
             v = self.Woodcuttingtnl
             skills = (a, b, cc, d, e, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v)
             c.execute('INSERT INTO PlayerSkills VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', skills)
-            self.sendLine('Creation Successful!')
+            # (Name, Maxhealth, MaxMana, HpRegen, MpRegen, Critical, Dodge, StrDmg, IntDmg, PhsDmgResist, MagDmgResist, Accuracy, MagicAccuracy, MagicDodge
+            a = self.name
+            b = self.maxhealthbonus
+            cc = self.maxmanabonus
+            d = self.healthregenbonus
+            e = self.manaregenbonus
+            f = self.criticalbonus
+            g = self.dodgebonus
+            h = self.strengthdamagebonus
+            i = self.magicdamagebonus
+            j = self.damageresistbonus
+            k = self.magicresistbonus
+            l = self.accuracybonus
+            m = self.magicaccuracybonus
+            n = self.magicdodgebonus
+            bonus = (a, b, cc, d, e, f, g, h, i, j, k, l, m, n)
+            c.execute("INSERT INTO PlayerBonusStats VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", bonus)
             conn.commit()
+            self.sendLine('Creation Successful!')
         except:
             print "Error in FIRSTSAVE()"
 
@@ -695,11 +822,19 @@ class Chat(LineReceiver):
         if self.state == "RACESTART":
             self.RACESTART(line)
             return
+        if self.state == 'GENDER':
+            self.GenderChoice(line)
+            return
+        if self.state == 'GENDERCONFIRM':
+            self.GenderConfirm(line)
+            return
         if self.state == "CHAT":
             self.handle_CHAT(line)
             return
         if self.state == "ATTACK":
             self.handle_ATTACK(line)
+            return
+        if self.state == 'DISCONNECTED':
             return
         if self.state == "SAY":
             self.handle_SAY(line)
@@ -815,6 +950,18 @@ class Chat(LineReceiver):
         if(self.state == 'RoomIDCreateUpDownConfirm'):
             self.CreateRoomUpDownConfirm(line)
             return
+        if(self.state == 'UpdateRoom1'):
+            self.UpdateRoomchoice(line)
+            return
+        if(self.state == 'UpdateRoom2'):
+            self.UpdateRoom(line)
+            return
+        if(self.state == 'UpdateRoom3'):
+            self.UpdateRoom1(line)
+            return
+        if(self.state == 'UpdateRoomConfirm'):
+            self.UpdateRoom2(line)
+            return
 
 #CREATION SEQUENCE
 
@@ -853,18 +1000,37 @@ class Chat(LineReceiver):
             chat = str(self)
             ID = (self.name, self.password, self.permission, chat)
             c.execute('INSERT INTO ID Values (?,?,?,?)', ID)
-            #c.commit()                                     #dont forget to include this!
+            conn.commit()                                     #dont forget to include this!
             global userlist
             userlist[self.name] = self
             self.handle_CLEARSCREEN
             self.sendLine("***WARNING*** Do not leave during this process! it won't take long!")
-            self.RACELIST()
-            self.state = "RACESTART"
+            self.state = 'GENDER'
+            self.handle_CLEARSCREEN()
+            self.sendLine("Is your character male or female?")
         if answer in('n', 'no', 'N', 'No'):
             self.handle_CLEARSCREEN()
             self.state = "NCREATE"
             self.sendLine("")
             self.sendLine("Please enter your desired username")
+
+    def GenderChoice(self, choice):
+        if choice in('m', 'male', 'Male', 'M'):
+            self.gender = 'Male'
+            self.state = 'GENDERCONFIRM'
+            self.sendLine("Is male correct? (yes/no)")
+        if choice in('f', 'female', 'Female', 'F'):
+            self.gender = 'Female'
+            self.state = 'GENDERCONFIRM'
+            self.sendLine("Is female correct? (yes/no)")
+
+    def GenderConfirm(self, line):
+        if line in('yes', 'y', 'Y', 'Yes'):
+            self.state = 'RACESTART'
+            self.RACELIST()
+        if line in('no', 'n', 'N', 'No'):
+            self.state = 'GENDER'
+            self.sendLine("Is your character male or female?")
 
     def RACESTART(self, choice):
         choice1 = choice[0:5]
@@ -1300,7 +1466,7 @@ class Chat(LineReceiver):
     def MakeWarrior(self):
         self.level = 1
         self.exp = 0
-        self.exptnl = 1000
+        self.exptnl = 500
         self.classname = 'Warrior'
         self.strength = 16
         self.constitution = 16
@@ -1319,7 +1485,7 @@ class Chat(LineReceiver):
     def MakeRogue(self):
         self.level = 1
         self.exp = 0
-        self.exptnl = 1000
+        self.exptnl = 500
         self.classname = 'Rogue'
         self.strength = 14
         self.constitution = 12
@@ -1338,7 +1504,7 @@ class Chat(LineReceiver):
     def MakePriest(self):
         self.level = 1
         self.exp = 0
-        self.exptnl = 1000
+        self.exptnl = 500
         self.classname = 'Priest'
         self.strength = 14
         self.constitution = 16
@@ -1357,7 +1523,7 @@ class Chat(LineReceiver):
     def MakeMagician(self):
         self.level = 1
         self.exp = 0
-        self.exptnl = 1000
+        self.exptnl = 500
         self.classname = 'Magician'
         self.strength = 11
         self.constitution = 12
@@ -1539,7 +1705,7 @@ class Chat(LineReceiver):
         health = health + health2
         healthregen = healthregen + healthregen2
         attack = strength * 2
-        strdmg = strength / 8.0
+        strdmg = strength / 6.0
         strdmg = int(strdmg)
         defence = constitution * 2
         self.strengthdamage = strdmg
@@ -1547,16 +1713,18 @@ class Chat(LineReceiver):
         self.maxhealth = health
         self.healthregen = healthregen
         self.attack = attack
+        self.normalattack = attack
         self.defence = defence
+        self.normaldefence = defence
         dexterity = self.dexterity
         agility = self.agility
-        accuracy = dexterity * 2
+        accuracy = (dexterity * 2) + agility + 50
         accuracy = accuracy + 50
         speedmod = agility + dexterity
         if self.classname in('Shadow Blade', 'Blade Master', 'Ranger', 'Rogue'):
-            speedmod = speedmod / 300.00
+            speedmod = speedmod / 225.00
         else:
-            speedmod = speedmod / 250.00
+            speedmod = speedmod / 200.00
         speedmod = 1 - speedmod
         if self.classname in('Shadow Blade', 'Blade Master', 'Ranger', 'Rogue'):
             dodge = agility * 2
@@ -1589,6 +1757,15 @@ class Chat(LineReceiver):
         spot = intellegence * 2
         mattack = intellegence * 2
         mdefence = wisdom * 2
+        magicaccuracy = (intellegence * 2) +  wisdom + 50
+        if self.classname in('Magician', 'Paladin', 'Chaos Knight', 'Ranger', 'Priest', 'Templar', 'Sage', 'Shadow Blade', 'Arch Mage'):
+            magicdodge = int(wisdom * 1.75)
+        else:
+            magicdodge = int(wisdom * 1.5)
+        magicdamage = int(intellegence / 6.0)
+        self.magicdamage = magicdamage
+        self.magicdodge = magicdodge
+        self.magicaccuracy = magicaccuracy
         self.spot = spot
         self.mana = mana
         self.maxmana = mana
@@ -1639,9 +1816,11 @@ class Chat(LineReceiver):
 
 
 # ROOM HANDLING
-    def displayMobs(self):
+    def displayMobs(self, roomlook=None, direction=None):
         global c
-        room = (self.room,)
+        if roomlook == None:
+            roomlook = self.room
+        room = (roomlook,)
         c.execute('''SELECT * FROM RoomMobs where ID=?''', room)
         test = c.fetchone()
         count = 1
@@ -1653,7 +1832,10 @@ class Chat(LineReceiver):
             else:
                 count = count + 1
         if mobs >= 1:
-            self.sendLine("Mobs nearby...")
+            if roomlook != self.room:
+                self.sendLine("Mobs toward the %s" % (direction))
+            else:
+                self.sendLine("Mobs nearby...")
         count = 1
         while count <= 5:
             if test[count] in('', None):
@@ -1689,12 +1871,17 @@ class Chat(LineReceiver):
                 count = count + 1
                 self.sendLine(mobs)
 
-    def displayPlayers(self):
+    def displayPlayers(self, roomlook=None, direction=None):
         global c
-        room = (self.room,)
+        if roomlook == None:
+            roomlook = self.room
+        room = (roomlook,)
         c.execute('''SELECT * FROM RoomPlayers where ID=?''', room)
         test = c.fetchone()
-        players = "Players nearby"
+        if roomlook != self.room:
+            players = "Players to the %s" % direction
+        else:
+            players = "Players nearby"
         count = 1
         while(count <= 20):
             teststr = test[count]
@@ -1709,7 +1896,34 @@ class Chat(LineReceiver):
                     name = teststr
                     players = players + " " + name
                     count = count + 1
-        if players == "Players nearby":
+        if players == "Players to the %s" % direction:
+            pass
+        else:
+            if players == "Players nearby":
+                pass
+            else:
+                self.sendLine("%s" % players)
+
+    def displayItems(self):
+        global c
+        room = (self.room,)
+        c.execute('''SELECT * FROM RoomItems where ID=?''', room)
+        test = c.fetchone()
+        players = "Items in room:"
+        count = 1
+        while(count <= 20):
+            teststr = test[count]
+            teststr = str(teststr)
+            if teststr in('', None):
+                count = count + 1
+            else:
+                c.execute('''SELECT * FROM Gear where ID=?''', (teststr,))
+                fetch = c.fetchone()
+                name = fetch[1]
+                name = "(" + str(count) + ")" + str(name)
+                players = players + " " + name
+                count = count + 1
+        if players == "Items in room:":
             pass
         else:
             self.sendLine("%s" % players)
@@ -1855,19 +2069,48 @@ class Chat(LineReceiver):
                         self.regionname = 'Cave of Exordior'
                     if (self.room >= 30) and (self.room <= 64):
                         self.regionname = 'Exordior Mine'
+                    if (self.room >= 65) and (self.room <= 110):
+                        self.regionname = 'Bratus Nemus'
+                    if (self.room >= 111) and (self.room <= 125):
+                        self.regionname = 'Exordior / Bratus Nemus Path'
                     conn.commit()
                     counter = 30
             conn.commit()
         except:
             self.sendLine("Room move was not successful")
 
-    def displayExits(self):
+    def displayExits(self, lookdir=None):
         try:
             global c
-            self.LocationPrint()
+            if lookdir == None:
+                self.LocationPrint()
             room = (self.room,)
             c.execute("""SELECT * FROM RoomExits where ID=?""", room)
             test = c.fetchone()
+            if lookdir in('east', 'e', 'East'):
+                roomlook = test[7]
+                self.sendLine("You look to the east...")
+                self.displayPlayers(roomlook, 'east')
+                self.displayMobs(roomlook, 'east')
+                return
+            if lookdir in('north', 'n', 'North'):
+                roomlook = test[6]
+                self.sendLine("You look to the north...")
+                self.displayPlayers(roomlook, 'north')
+                self.displayMobs(roomlook, 'north')
+                return
+            if lookdir in('south', 's', 'South'):
+                self.sendLine("You look to the south")
+                roomlook = test[8]
+                self.displayPlayers(roomlook, 'south')
+                self.displayMobs(roomlook, 'south')
+                return
+            if lookdir in('west', 'w', 'West'):
+                self.sendLine("You look to the west")
+                roomlook = test[9]
+                self.displayPlayers(roomlook, 'west')
+                self.displayMobs(roomlook, 'west')
+                return
             c.execute('''SELECT * FROM RoomUpDown WHERE ID=?''', room)
             test2 = c.fetchone()
             description = str(test[1])
@@ -1916,6 +2159,7 @@ class Chat(LineReceiver):
                         rooms = rooms + " D"
             self.sendLine("%s" % rooms)
             self.displayPlayers()
+            self.displayItems()
             self.displayMobs()
         except:
             self.sendLine("Display room didn't work...'")
@@ -2002,12 +2246,13 @@ class Chat(LineReceiver):
                 self.mainhandvalmin = test[3]
                 self.mainhandvalmax = test[4]
                 self.mainhandspeed = test[5]
+                self.attackspeed = self.mainhandspeed * self.speedmod
             t = self.offhandid
             t = (t,)
             c.execute('SELECT * FROM Gear WHERE ID=?', t)
             test = c.fetchone()
-            if test == None:
-                pass
+            if test in(None, '', 'None'):
+                self.attackspeed = self.mainhandspeed * self.speedmod
             else:
                 self.offhand = str(test[1])
                 self.offhandtype = str(test[2])
@@ -2020,7 +2265,7 @@ class Chat(LineReceiver):
                     attackspeed = att + att2
                     self.attackspeed = attackspeed
                 else:
-                    self.attackspeed = self.mainhandspeed
+                    self.attackspeed = self.mainhandspeed * self.speedmod
                 if self.offhandtype == 'Shield':
                     defence = self.offhandvalmin
                     self.defence = defence + self.defence
@@ -2070,30 +2315,30 @@ class Chat(LineReceiver):
                 self.bootsvalue = test[3]
                 defence = self.defence + self.bootsvalue
                 self.defence = defence
-                self.sendLine("Gear Equipped! Check it with /equip")
+            #self.sendLine("Gear Equipped! Check it with /equipped")
         except:
             print "EQUIPSTART() Failed"
 
     def STATS(self):
-        self.sendLine("================================")
+        self.sendLine("======================================================")
         self.sendLine("Name :   %s" % (self.name))
-        self.sendLine("================================")
-        self.sendLine("Class :   %s %s" % (self.race, self.classname))
+        self.sendLine("======================================================")
+        self.sendLine("Class :   %s %s %s" % (self.gender, self.race, self.classname))
         self.sendLine("Level :   %s" % (self.level))
         self.sendLine("Exp :     %-5s" % (self.exp))
         self.sendLine("ExpTNL :  %-5s" % (self.exptnl))
-        self.sendLine("================================")
+        self.sendLine("======================================================")
         self.VitalBarDisplay('health', self.health, self.maxhealth)
         self.sendLine("      %3s / %3s    HPRegen : %2s" % (self.health, self.maxhealth, self.healthregen))
         self.VitalBarDisplay('mana', self.mana, self.maxmana)
         self.sendLine("      %3s / %3s    MPRegen : %2s" % (self.mana, self.maxmana, self.manaregen))
-        self.sendLine("================================")
-        self.sendLine("Str : %2s   Attack:   %3s" % (self.strength, self.attack))     # ++health   ++physical attack  +health regen
-        self.sendLine("Con : %2s   Defence:  %3s" % (self.constitution, self.defence)) # ++health   ++health regen     +physical defence
-        self.sendLine("Dex : %2s   Accuracy: %3s" % (self.dexterity, self.accuracy))    # ++accuracy                    +critical chance
-        self.sendLine("Agl : %2s   Dodge:    %3s" % (self.agility, self.dodge))      # ++dodge                       +critical chance
-        self.sendLine("Wis : %2s   Mag Def:  %3s" % (self.wisdom, self.mdefence))       # ++mana     ++mana regen       +magic defence
-        self.sendLine("Int : %2s   Mag Atk:  %3s" % (self.intellegence, self.mattack)) # ++mana     ++magic attack     +mana regen
+        self.sendLine("======================================================")
+        self.sendLine("Str : %2s   Attack:   %3s   Physical Bonus :   %2s" % (self.strength, self.attack, self.strengthdamage))     # ++health   ++physical attack  +health regen
+        self.sendLine("Con : %2s   Defence:  %3s   Damage Reduction:  %2s" % (self.constitution, self.defence, self.damageresist)) # ++health   ++health regen     +physical defence
+        self.sendLine("Dex : %2s   Accuracy: %3s   Critical Chance :  %2s" % (self.dexterity, self.accuracy, self.critical))    # ++accuracy                    +critical chance
+        self.sendLine("Agl : %2s   Dodge:    %3s   Attack Speed :   %.2f" % (self.agility, self.dodge, self.attackspeed))      # ++dodge                       +critical chance
+        self.sendLine("Wis : %2s   Mag Def:  %3s   Magic Resist :     %2s" % (self.wisdom, self.mdefence, self.magicdodge))       # ++mana     ++mana regen       +magic defence
+        self.sendLine("Int : %2s   Mag Atk:  %3s   Magic Bonus :      %2s" % (self.intellegence, self.mattack, self.magicdamage)) # ++mana     ++magic attack     +mana regen
 # Party Commands!
     def PartyDisplayStats(self):
         try:
@@ -2421,7 +2666,7 @@ class Chat(LineReceiver):
         if char != None:
             self.sendLine("================================")
             self.sendLine("Name  : %s" % (char.name))
-            self.sendLine("Class : %s %s" % (char.race, char.classname))
+            self.sendLine("Class : %s %s %s" % (char.gender, char.race, char.classname))
             self.sendLine("Level : %s" % (char.level))
             self.sendLine("Region: %s" % (char.regionname))
             self.sendLine("================================")
@@ -2813,11 +3058,11 @@ class Chat(LineReceiver):
 
     def CreateRoomConfirm(self, answer):
         try:
-            if coord == '/back':
+            if answer == '/back':
                 self.state = "RoomIDCreate13"
                 self.sendLine("Enter the Z Coordinate")
                 return
-            if coord == '/exit':
+            if answer == '/exit':
                 self.state = "CHAT"
                 self.sendLine("Left room creation sequence")
                 return
@@ -2826,20 +3071,20 @@ class Chat(LineReceiver):
                     if self.createroomdescripN == 'None':
                         descripN = 'None'
                     else:
-                        descripN = "'" + self.createroomdescripN + "'"
+                        descripN = '"' + self.createroomdescripN + '"'
                     if self.createroomdescripE == 'None':
                         descripE = 'None'
                     else:
-                        descripE = "'" + self.createroomdescripE + "'"
+                        descripE = '"' + self.createroomdescripE + '"'
                     if self.createroomdescripS == 'None':
                         descripS = 'None'
                     else:
-                        descripS = "'" + self.createroomdescripS + "'"
+                        descripS = '"' + self.createroomdescripS + '"'
                     if self.createroomdescripW == 'None':
                         descripW = 'None'
                     else:
-                        descripW = "'" + self.createroomdescripW + "'"
-                    saveline = '(' + self.createroomid + ', "' + self.createroomdescrip + '", ' + descripN + ', ' + descripE + ', ' + descripS + ', ' + descripW + ', '+ self.createroomidN + ', ' + self.createroomidE + ', ' + self.createroomidS + ', ' + self.createroomidW + ', ' + self.createroomcoordx + ', ' + self.createroomcoordy + ', ' + self.createroomcoordz + ')' + '\n'
+                        descripW = '"' + self.createroomdescripW + '"'
+                    saveline = '(' + self.createroomid + ', "' + self.createroomdescrip + '", ' + descripN + ', ' + descripE + ', ' + descripS + ', ' + descripW + ', '+ self.createroomidN + ', ' + self.createroomidE + ', ' + self.createroomidS + ', ' + self.createroomidW + ', ' + self.createroomcoordx + ', ' + self.createroomcoordy + ', ' + self.createroomcoordz + '),' + '\n'
                     myfile.write(saveline)
                 if self.createroomdescripN == 'None':
                     self.createroomdescripN = None
@@ -2850,7 +3095,9 @@ class Chat(LineReceiver):
                 if self.createroomdescripW == 'None':
                     self.createroomdescripW = None
                 room = (int(self.createroomid), self.createroomdescrip, self.createroomdescripN, self.createroomdescripE, self.createroomdescripS, self.createroomdescripW, self.createroomidNsql, self.createroomidEsql, self.createroomidSsql, self.createroomidWsql, int(self.createroomcoordx), int(self.createroomcoordy), int(self.createroomcoordz))
-                print room
+                LocalTime()
+                global localtime
+                print localtime, self.name, "created room", self.createroomid
                 c.execute('''INSERT INTO RoomExits VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''', room)
                 conn.commit()
                 self.sendLine("Entry saved and room commited!")
@@ -2869,6 +3116,9 @@ class Chat(LineReceiver):
         self.state = "RoomIDCreateUpDown1"
 
     def CreateRoomUpDown1(self, roomid):
+        if roomid == '/exit':
+            self.state = 'CHAT'
+            self.sendLine("Back in CHAT")
         if roomid == '':
             self.sendLine("Invalid room entry")
             return
@@ -2884,6 +3134,9 @@ class Chat(LineReceiver):
             self.sendLine("Room Exists, pick a different ID")
 
     def CreateRoomUpDown2(self, room):
+        if room == '/exit':
+            self.state = "CHAT"
+            self.sendLine("Back in CHAT")
         if room == "":
             self.createroomup = None
         else:
@@ -2892,6 +3145,9 @@ class Chat(LineReceiver):
         self.state = "RoomIDCreateUpDown3"
 
     def CreateRoomUpDown2(self, room):
+        if room == "/exit":
+            self.state = 'CHAT'
+            self.sendLine("Back in CHAT")
         if room == "":
             self.createroomdown = None
         else:
@@ -2911,14 +3167,85 @@ class Chat(LineReceiver):
             self.sendLine("Entry saved and room commited!")
             self.state = "CHAT"
         if answer in('n', 'No', 'no', 'N'):
-            self.sendLine("Left creation, back in normal sequence")
+            self.sendLine("Left creation, back in CHAT")
             self.state = "CHAT"
+
+    def UpdateRoomchoice(self, room):
+        if room == '/exit':
+            self.state = 'CHAT'
+            self.sendLine("Left Update Room Sequence")
+            return
+        global c
+        roomchoice = int(room)
+        roomchoice = (roomchoice,)
+        c.execute('SELECT * FROM RoomExits WHERE ID=?', roomchoice)
+        fetch = c.fetchone()
+        if fetch == None:
+            self.sendLine("Room details don't exist, create it first'")
+        else:
+            line = "Room choice was " + str(room)
+            self.sendLine(line)
+            self.createroomid = room
+            self.state = 'UpdateRoom2'
+            self.sendLine("Update options... (Case Sensitive)")
+            self.sendLine("ID, Description, NorthDescription, EastDescription, SouthDescription, WestDescription")
+            self.sendLine("North, East, South, West, CoordX, CoordY, CoordZ")
+
+    def UpdateRoom(self, choice):
+        if choice == '/exit':
+            self.state = 'CHAT'
+            self.sendLine("Back in CHAT")
+            return
+        if choice in('ID', 'Description', 'NorthDecription', 'EastDescription', 'SouthDescription', 'WestDescription', 'North', 'East', 'South', 'West', 'CoordX', 'CoordY', 'CoordZ'):
+            line = 'What do you want to set ' + choice + ' to?'
+            self.sendLine(line)
+            self.state = 'UpdateRoom3'
+            self.updateroom = choice
+        else:
+            self.sendLine("Update options...")
+            self.sendLine("ID, Description, NorthDescription, EastDescription, SouthDescription, WestDescription")
+            self.sendLine("North, East, South, West, CoordX, CoordY, CoordZ")
+            self.sendLine("")
+            self.sendLine("Select /exit to leave this sequence")
+
+    def UpdateRoom1(self, line):
+        if line == '/exit':
+            self.state = "CHAT"
+            self.sendLine("Back in CHAT")
+            return
+        entry = 'Is, ' + line + ', correct?'
+        self.sendLine("C)onfirm, or R)estart")
+        self.sendLine(entry)
+        self.updateroominfo = line
+        self.state = 'UpdateRoomConfirm'
+
+    def UpdateRoom2(self, confirm):
+        if confirm == '/exit':
+            self.state = "CHAT"
+            self.sendLine("Back in CHAT")
+            return
+        if confirm in('Confirm', 'c', 'C', 'confirm', 'con'):
+            room = self.createroomid
+            column = self.updateroom
+            info = self.updateroominfo
+            roominfo = (info, room)
+            c.execute('UPDATE RoomExits SET ' + column + '=? WHERE ID=?', roominfo)
+            conn.commit()
+            self.state = 'CHAT'
+            line = 'Updated room, ' + str(room) + 'in column, ' + column + ' with entry, ' + info
+            self.sendLine(line)
+        if confirm in('Restart', 'res', 'Res', 'r', 'R', 'restart'):
+            self.sendLine("What room would you like to update?")
+            self.state = 'UpdateRoom1'
 
     def Teleport(self, room):
         try:
             val = int(room)
             self.handle_CLEARSCREEN()
             self.sendLine("You have teleported to room %s" % val)
+            LocalTime()
+            global localtime
+            print localtime, self.name, "teleported to room", room
             self.room = int(room)
             self.updateRoom('Teleport', 'Teleport')
             self.displayExits()
@@ -2959,10 +3286,32 @@ class Chat(LineReceiver):
                 player = diction.get(key)
                 player.sendLine(line)
                 player.sendLine("Please get somewhere safe...")
-            print "SERVER called to stop by...", self.name
+            LocalTime()
+            global localtime
+            print localtime, "[#STOP#] called by...", self.name
             reactor.callLater(3.0, self.StopAll)
         except:
             print "Stop() Didn't work'"
+
+    def LevelSet(self, name, level):
+        global userlist
+        diction = userlist
+        player = diction.get(name)
+        if player in(None, ''):
+            self.sendLine('Invalid entry')
+        else:
+            player.level = level
+            player.sendLine(str("You have been set to level %s by admin %s" % (level, self.name)))
+
+    def ExpSet(self, name, exp):
+        global userlist
+        diction = userlist
+        player = diction.get(name)
+        if player in(None, ''):
+            self.sendLine('Invalid entry')
+        else:
+            player.exptnl = exp
+            player.sendLine(str("Your exptnl has been set to %s by admin %s" % (exp, self.name)))
 
     def StopAll(self):
         try:
@@ -2990,7 +3339,6 @@ class Chat(LineReceiver):
         test= c.fetchone()
         mob = test[slot]
         if mob in('', None):
-            self.sendLine("Creature doesn't exist!")
             return
         mobs = (mob,)
         c.execute('SELECT * FROM ActiveMonster WHERE RandomID=?', mobs)
@@ -3010,24 +3358,45 @@ class Chat(LineReceiver):
         mobhp = target[4]
         mobhp = mobhp - damage
         c.execute('UPDATE ActiveMonster SET Health=? WHERE RandomID=?', (mobhp, mob))
-        if(int(target[4]) <= 0): # Mob health < 0 Check
-            self.handle_MOBDEATH(target[0], target[2], target[0])
-            self.handle_TellRoom("%s has slain the %s" % (self.name, name))
-            self.sendLine("You have slain the %s" % (name))
+        if(mobhp <= 0): # Mob health < 0 Check
+            self.handle_TellRoom(str("%s has slain the %s with %s" % (self.name, name, skillname)))
+            self.sendLine(str("You have slain the %s with %s for %s damage" % (name, skillname, damage)))
+            self.handle_MOBDEATH(target[0], target[2], self.targetslot)
         else:
-            self.sendLine("You used %s on the %s for %s damage!" % (skillname, name, damage))
-            self.handle_TellRoom("%s used %s on %s for %s damage" % (self.name, skillname, name, damage))
+            self.sendLine(str("You used %s on the %s for %s damage!" % (skillname, name, damage)))
+            self.handle_TellRoom(str("%s used %s on %s for %s damage" % (self.name, skillname, name, damage)))
+        conn.commit()
+
+    def MobActiveTest(self, dmg=1):
+        target = self.target
+        mob = target[0]
+        self.threatCalculator(dmg, mob)
+        fightbool = str(target[17])
+        if fightbool == 'False':
+            c.execute('''UPDATE ActiveMonster SET AttackBool='True' WHERE RandomID=?''', (mob,))
+            conn.commit()
+            reactor.callLater(3.0, MobFight, mob)
 
 ###########
 # Warrior #
 ###########
 ############### WARRIOR ####################
     def HeavyHit(self, target): #level 1, 10MP
-        if self.heavyhit is False:
+        self.targetslot = target
+        if self.skill1 is False:
             self.sendLine("Heavy Hit not ready")
             return
+        if self.mana < 10:
+            self.sendLine("Not enough mana for Heavy Hit")
+            return
         self.TargetMob(target)
-        target = self.target
+        try:
+            target = self.target
+        except:
+            self.sendLine("Invalid Target")
+            return
+        self.skill1 = False
+        self.mana = self.mana - 10
         hitmax = 100 + int(target[13])
         hit = random.randint(1, hitmax)
         attackmin = self.mainhandvalmin
@@ -3037,51 +3406,56 @@ class Chat(LineReceiver):
             offhandmin = int(offhandmin)
             offhandmax = self.offhandvalmax * 0.75
             offhandmax = int(offhandmax)
-            attackmin = self.mainhandvalmin + offhandmin
-            attackmax = self.mainhandvalmax + offhandmax
+            attackmin = attackmin + offhandmin
+            attackmax = attackmax + offhandmax
         attack = random.randint(attackmin, attackmax) + self.strengthdamage
         if(hit <= self.accuracy):
             af = float(self.attack)
             attackmod = af / int(target[9])
             attack = float(attack)
             damage = attackmod * attack
-            HeavyHitDamage = self.strength / 2
+            HeavyHitDamage = random.randint((self.strengthdamage / 4), (self.strengthdamage / 2))
             damage += HeavyHitDamage
-            self.SkillAttackMob(damage, 'Heavy Hit')
-            reactor.callLater(30.0, self.SkillCooldown(1))
+            self.SkillAttackMob(int(damage), 'Heavy Hit')
+            self.MobActiveTest(int(damage))
         else:
-            self.sendLine("You missed the %s with %s" % (target[3], 'Heavy Hit'))
-            self.handle_TellRoom("%s missed the %s with %s" % (self.name, target[3], 'Heavy Hit'))
+            self.sendLine(str("You missed the %s with %s" % (target[3], 'Heavy Hit')))
+            self.handle_TellRoom(str("%s missed the %s with %s" % (self.name, target[3], 'Heavy Hit')))
+            self.MobActiveTest()
+        reactor.callLater(20.0, self.SkillCooldown, 1, 'Heavy Hit')
 
-    def taunt(self, target): #level 5,/ MP
-        if self.taunt is False:
+
+    def taunt(self, target): #level 5,/ 4MP
+        if self.skill3 is False:
             self.sendLine("Taunt not ready")
             return
-        global c
+        if self.mana < 4:
+            self.sendLine("Not enough mana for Taunt")
+            return
         self.TargetMob(target)
-        target = self.target
-        mobid = target[0]
-        c.execute('''SELECT * FROM MonsterThreat WHERE RandomID=?''', (mobid,))
-        fetch = c.fetchone()
-        count = 1
-        while count <= 11:
-            player = fetch[count]
-            player = str(player)
-            if player == self.name:
-                count += 1
-                curthreat = fetch[count]
-                threat = curthreat + 200
-                self.sendLine("Taunt successful on %s" % (target[3]))
-                self.taunt = False
-                reactor.callLater(20.0, self.SkillCooldown(4))
-                return
-            else:
-                count += 2
-        self.sendLine("Taunt didn't work correctly...")
+        try:
+            target = self.target
+        except:
+            self.sendLine("Invalid Target")
+            return
+        self.mana = self.mana - 4
+        self.skill3 = False
+        self.MobActiveTest(50)
+        self.sendLine(str("You taunted %s" % target[3]))
+        reactor.callLater(12.0, self.SkillCooldown, 3, 'Taunt')
 
     def doubleHit(self, target): #level 4, 8 MP
-        if self.doubleHit is False:
+        self.targetslot = target
+        if self.skill2 is False:
             self.sendLine("Double Hit not ready")
+            return
+        if self.mana < 8:
+            self.mana = self.mana - 8
+            return
+        try:
+            target = self.target
+        except:
+            self.sendLine("Invalid Target")
             return
         self.TargetMob(target)
         target = self.target
@@ -3095,10 +3469,12 @@ class Chat(LineReceiver):
             offhandmin = int(offhandmin)
             offhandmax = self.offhandvalmax * 0.75
             offhandmax = int(offhandmax)
-            attackmin = self.mainhandvalmin + offhandmin
-            attackmax = self.mainhandvalmax + offhandmax
+            attackmin = attackmin + offhandmin
+            attackmax = attackmax + offhandmax
         attack = random.randint(attackmin, attackmax) + self.strengthdamage
         attack2 = random.randint(attackmin, attackmax) + self.strengthdamage
+        attack = int(attack * 0.8)
+        attack2 = int(attack2 * 0.8)
 
         if(hit <= self.accuracy):
             af = float(self.attack)
@@ -3108,21 +3484,42 @@ class Chat(LineReceiver):
             damage2 = attackmod * attack2
             self.SkillAttackMob(damage1, 'Double Hit')
             self.SkillAttackMob(damage2, 'Double Hit')
-            reactor.callLater(8, self.SkillCooldown(3))
+            totaldamage = damage1 + damage2
+            self.MobActiveTest(totaldamage)
 
         else:
             self.sendLine("You missed the %s with %s" % (target[3], 'Double Hit'))
             self.handle_TellRoom("%s missed the %s with %s" % (self.name, target[3], 'Double Hit'))
+            self.MobActiveTest()
+
+        reactor.callLater(12, self.SkillCooldown(2), 'Double Hit')
 
     def warriorBonusI(self): #level 2
         self.strength += 1
         self.constitution += 1
+        self.sendLine("Gained Warrior Bonus I (+1 Strength, +1 Constitution)")
 
-
-    def warriorStance(): #level 7, toggle
-        print "in progress"
-        #125% Defense
-        #75% Attack
+    def warriorStance(self, toggle): #level 7, toggle
+        if toggle in('Offensive', 'offense', 'off', 'offensive', 'o'):
+            self.attack = int(self.normalattack * 1.25)
+            self.defence = int(self.normaldefence * 0.75)
+            self.sendLine("You are now in offensive stance")
+            self.EQUIPSTART()
+            return
+        if toggle in('normal', 'norm', 'n', 'Normal'):
+            self.attack = self.normalattack
+            self.defence = self.normaldefence
+            self.sendLine("You are now in normal stance")
+            self.EQUIPSTART()
+            return
+        if toggle in('defensive', 'defence', 'd', 'def', 'defense'):
+            self.attack = int(self.normalattack * 0.75)
+            self.defence = int(self.normaldefence * 1.25)
+            self.sendLine("You are now in defensive stance")
+            self.EQUIPSTART()
+            return
+        else:
+            self.sendLine("Invalid Stance Type, available are, offensive, defensive, normal")
 
 #########
 # Rogue #
@@ -3131,10 +3528,108 @@ class Chat(LineReceiver):
 
 ############### ROGUE ####################
     def doubleStrike(self, target): #level 1, 8MP
-        if self.doubleStrike is False:
+        self.targetslot = target
+        if self.skill1 is False:
             self.sendLine("Double Strike not ready")
             return
+        if self.mana < 8:
+            self.sendLine("Not enough mana for Double Strike")
+            return
         self.TargetMob(target)
+        try:
+            target = self.target
+        except:
+            self.sendLine("Invalid Target")
+            return
+        self.mana = self.mana - 8
+        self.skill1 = False
+        target = self.target
+        hitmax = 100 + int(target[13])
+        hit = random.randint(1, hitmax)
+        hit2 = random.randint(1, hitmax)
+        attackmin = self.mainhandvalmin
+        attackmax = self.mainhandvalmax
+
+        if(self.offhandtype == 'Weapon'):
+            offhandmin = self.offhandvalmin * 0.75
+            offhandmin = int(offhandmin)
+            offhandmax = self.offhandvalmax * 0.75
+            offhandmax = int(offhandmax)
+            attackmin = attackmin + offhandmin
+            attackmax = attackmax + offhandmax
+        attack = random.randint(attackmin, attackmax) + self.strengthdamage
+        attack2 = random.randint(attackmin, attackmax) + self.strengthdamage
+
+        damage1 = 0
+        damage2 = 0
+
+        if(hit <= self.accuracy):
+            af = float(self.attack)
+            attackmod = af / int(target[9])
+            attack = float(attack)
+            damage1 = attackmod * attack
+            damage1 = int(damage1)
+            self.SkillAttackMob(damage1, 'Double Strike')
+        else:
+            self.sendLine(str("You missed the %s with %s" % (target[3], 'Double Strike')))
+            self.handle_TellRoom(str("%s missed the %s with %s" % (self.name, target[3], 'Double Strike')))
+
+        if(hit2 <= self.accuracy):
+            af = float(self.attack)
+            attackmod = af / int(target[9])
+            attack = float(attack)
+            damage2 = attackmod * attack2
+            damage2 = int(damage2)
+            self.SkillAttackMob(damage2, 'Double Strike')
+        else:
+            self.sendLine(str("You missed the %s with %s" % (target[3], 'Double Strike')))
+            self.handle_TellRoom(str("%s missed the %s with %s" % (self.name, target[3], 'Double Strike')))
+
+        totdam = damage1 + damage2
+        self.MobActiveTest(totdam)
+        reactor.callLater(16, self.SkillCooldown, 1, 'Double Strike')
+
+    def criticalPassive(self): #level 2, passive
+        global c
+        global conn
+        self.critical = self.critical + 5
+        c.execute('SELECT * FROM PlayerBonusStats')
+        fetch = c.fetchone()
+        critical = fetch[5]
+        print critical
+        critical = critical + 5
+        self.criticalbonus = critical
+        print critical
+        add = (critical, self.name)
+        c.execute('UPDATE PlayerBonusStats SET Critical=? WHERE Name=?', add)
+        conn.commit()
+        self.sendLine("Gained Rogue Critical Bonus (+5% chance to crit)")
+
+    def rogueBonusI(self): #level 3
+        self.strength += 1
+        self.dexterity += 1
+        self.sendLine("Gained Rogue Bonus I (+1 Strength, +1 Dexterity)")
+
+    def dirtySleep(self, value, target):
+        c.execute("""UPDATE ActiveMonster SET Accuracy=? WHERE RandomID=?""", (value, target))
+        conn.commit()
+
+    def dirtyStrike(self, target): #level 5, 12 MP
+        self.targetslot = target
+        if self.skill2 is False:
+            self.sendLine("Double Strike not ready")
+            return
+        if self.mana < 12:
+            self.sendLine("Not enough mana for Double Strike")
+            return
+        self.TargetMob(target)
+        try:
+            target = self.target
+        except:
+            self.sendLine("Invalid Target")
+            return
+        self.mana = self.mana - 12
+        self.skill2 = False
         target = self.target
         hitmax = 100 + int(target[13])
         hit = random.randint(1, hitmax)
@@ -3146,8 +3641,8 @@ class Chat(LineReceiver):
             offhandmin = int(offhandmin)
             offhandmax = self.offhandvalmax * 0.75
             offhandmax = int(offhandmax)
-            attackmin = self.mainhandvalmin + offhandmin
-            attackmax = self.mainhandvalmax + offhandmax
+            attackmin = attackmin + offhandmin
+            attackmax = attackmax + offhandmax
         attack = random.randint(attackmin, attackmax) + self.strengthdamage
         attack2 = random.randint(attackmin, attackmax) + self.strengthdamage
 
@@ -3156,51 +3651,61 @@ class Chat(LineReceiver):
             attackmod = af / int(target[9])
             attack = float(attack)
             damage1 = attackmod * attack
-            damage2 = attackmod * attack2
-            self.SkillAttackMob(damage1, 'Double Strike')
-            self.SkillAttackMob(damage2, 'Double Strike')
-            reactor.callLater(16, self.SkillCooldown(1))
+            damage1 = int(damage1)
+            self.SkillAttackMob(damage1, 'Dirty Strike')
+            self.MobActiveTest(damage1)
+            mobaccuracy = target[12]
+            name = str(target[0])
+            halved = mobaccuracy
+            halved = halved * 0.5
+            c.execute("""UPDATE ActiveMonster SET Accuracy=? WHERE RandomID=?""", (halved, name))
+            conn.commit()
+            reactor.callLater(3.5, self.dirtySleep, mobaccuracy, name)
 
         else:
-            self.sendLine("You missed the %s with %s" % (target[3], 'Double Strike'))
-            self.handle_TellRoom("%s missed the %s with %s" % (self.name, target[3], 'Double Strike'))
+            self.sendLine(str("You missed the %s with %s" % (target[3], 'Dirty Strike')))
+            self.handle_TellRoom(str("%s missed the %s with %s" % (self.name, target[3], 'Dirty Strike')))
+            self.MobActiveTest()
+        reactor.callLater(16.0, self.SkillCooldown, 2, 'Dirty Strike')
 
-    def criticalPassive(self): #level 2, passive
-        roguecrit = self.critical
-        bonus = roguecrit * 0.05
-        roguecrit += bonus
-
-    def rogueBonusI(self): #level 3
-        self.strength += 1
-        self.dexterity += 1
-
-    def dirtySleep(self, value, target):
-        c.execute("""UPDATE ActiveMonster SET Accuracy=? WHERE RandomID=?""", (value, target))
-        conn.commit()
-
-    def dirtyStrike(self, target): #level 5, 12 MP
-        global c
-        mobaccuracy = target[12]
-        name = str(target[0])
-        halved = mobaccuracy
-        halved = halved * 0.5
-        c.execute("""UPDATE ActiveMonster SET Accuracy=? WHERE RandomID=?""", (halved, name))
-        conn.commit()
-        reactor.callLater(3.5, self.dirtySleep(mobaccuracy, name))
-
-#    def SkillCooldown(self, skill):
-#        skills = dict(1=self.skill1 = True, 2=self.skill2 = True, 3=self.skill3 = True, 4=self.skill4 = True, 5=self.skill5 = True)]
-#        command = skills.get(skill)
-#        exec(command)
+    def SkillCooldown(self, skill, name):
+        line = name + " has been refreshed"
+        self.sendLine(line)
+        if skill == 1:
+            self.skill1 = True
+        if skill == 2:
+            self.skill2 = True
+        if skill == 3:
+            self.skill3 = True
+        if skill == 4:
+            self.skill4 = True
+        if skill == 5:
+            self.skill5 = True
 
     def tripleStrike(self, target): #level 7, 16 MP
-        if self.doubleStrike is False:
+        self.targetslot = target
+        if self.skill3 is False:
             self.sendLine("Triple Strike not ready")
             return
+        if self.mana < 16:
+            self.sendLine("Not enough mana for Triple Strike")
+            return
         self.TargetMob(target)
+        try:
+            target = self.target
+        except:
+            self.sendLine("Invalid Target")
+            return
+        self.skill3 = False
+        self.mana = self.mana - 16
+        damage1 = 0
+        damage2 = 0
+        damage3 = 0
         target = self.target
         hitmax = 100 + int(target[13])
         hit = random.randint(1, hitmax)
+        hit2 = random.randint(1, hitmax)
+        hit3 = random.randint(1, hitmax)
         attackmin = self.mainhandvalmin
         attackmax = self.mainhandvalmax
 
@@ -3219,36 +3724,71 @@ class Chat(LineReceiver):
             af = float(self.attack)
             attackmod = af / int(target[9])
             attack = float(attack)
-            damage1 = attackmod * attack
-            damage2 = attackmod * attack2
+            if attack < 0.5:
+                attack = 0.5
+            damage1 = int(attackmod * attack)
             self.SkillAttackMob(damage1, 'Triple Strike')
+            self.MobActiveTest(totdam)
+
+        if(hit2 <= self.accuracy):
+            af = float(self.attack)
+            attackmod = af / int(target[9])
+            attack = float(attack)
+            if attack < 0.5:
+                attack = 0.5
+            damage2 = int(attackmod * attack2)
             self.SkillAttackMob(damage2, 'Triple Strike')
             self.SkillAttackMob(damage3, 'Triple Strike')
-            reactor.callLater(32, self.SkillCooldown(4))
+
+        if(hit3 <= self.accuracy):
+            af = float(self.attack)
+            attackmod = af / int(target[9])
+            attack = float(attack)
+            if attack < 0.5:
+                attack = 0.5
+            damage3 = int(attackmod * attack3)
+            self.SkillAttackMob(damage3, 'Triple Strike')
 
         else:
-            self.sendLine("You missed the %s with %s" % (target[3], 'Triple Strike'))
-            self.handle_TellRoom("%s missed the %s with %s" % (self.name, target[3], 'Triple Strike'))
+            self.sendLine(str("You missed the %s with %s" % (target[3], 'Triple Strike')))
+            self.handle_TellRoom(str("%s missed the %s with %s" % (self.name, target[3], 'Triple Strike')))
+            self.MobActiveTest()
+        totdam = damage1 + damage2 + damage3
+        self.MobActiveTest(totdam)
+        reactor.callLater(32, self.SkillCooldown, 3, 'Triple Strike')
+
 
 ##########
 # Priest #
 ##########
 ############### PRIEST ####################
-    def lightSleep(self, value, target):
-        global c
-        print "will work on later"
-        #mobaccuracy = target[12]
-        #name = str(target[0])
-        #halved = mobaccuracy
-        #halved = halved * 0.5
-        #c.execute("""UPDATE ActiveMonster SET Accuracy=? WHERE RandomID=?""", (halved, name))
-        #reactor.callLater(3.5, self.dirtySleep(mobaccuracy, name))
+    def lightSleep(self):
+        try:
+            global c
+            target = self.target
+            name = str(target[0])
+            c.execute("""UPDATE ActiveMonster SET Stun=? WHERE RandomID=?""", ('False', name))
+            self.sendLine(str("Stun wore off of %s" % name))
+            conn.commit()
+        except:
+            pass
 
     def lightBash(self, target): #level 1, 8MP
-        if self.doubleStrike is False:
+        self.targetslot = target
+        if self.skill1 is False:
             self.sendLine("Light Bash not ready")
             return
+        if self.mana < 8:
+            self.sendLine("Not enough mana for Light Bash")
+            return
         self.TargetMob(target)
+        try:
+            target = self.target
+        except:
+            self.sendLine("Invalid Target")
+            return
+        self.mana = self.mana - 8
+        self.skill1 = False
         target = self.target
         hitmax = 100 + int(target[13])
         hit = random.randint(1, hitmax)
@@ -3260,49 +3800,87 @@ class Chat(LineReceiver):
             offhandmin = int(offhandmin)
             offhandmax = self.offhandvalmax * 0.75
             offhandmax = int(offhandmax)
-            attackmin = self.mainhandvalmin + offhandmin
-            attackmax = self.mainhandvalmax + offhandmax
+            attackmin = attackmin + offhandmin
+            attackmax = attackmax + offhandmax
 
-        attack = random.randint(attackmin, attackmax) + self.strengthdamage
+        attack = random.randint(attackmin, attackmax) + self.magicdamage
         mob_magic_def = target[15]
-        player_magic_atk = self.mattack
-        magicacc = (mob_magic_def - player_magic_atk) + 0.6
+        accuracy = self.accuracy
+        magicaccuracy = self.magicaccuracy
+        targetresist = int(target[15] * 1.5)
+        magichitmax = 100 + int(targetresist)
+        magichit = random.randint(1, magichitmax)
 
-        if(hit <= magicacc):
-            af = float(self.attack)
-            attackmod = af / int(target[9])
+        if(hit <= accuracy):
+            af = float(self.mattack)
+            attackmod = af / int(target[15])
             attack = float(attack)
-            damage = self.wisdom * 0.25
+            if attack > 2.0:
+                attack = 2.0
+            damage = int(attack * (self.wisdom * 0.25))
             self.SkillAttackMob(damage, 'Light Bash')
-            #insert lightSleep() here
-            reactor.callLater(16, self.SkillCooldown(1))
+            name = target[0]
+            c.execute("""UPDATE ActiveMonster SET Stun=? WHERE RandomID=?""", ('True', name))
+            conn.commit()
+            reactor.callLater(5.0, self.lightSleep)
+            self.MobActiveTest(damage)
 
         else:
-            self.sendLine("You missed the %s with %s" % (target[3], 'Light Bash'))
-            self.handle_TellRoom("%s missed the %s with %s" % (self.name, target[3], 'Light Bash'))
+            self.sendLine(str("%s resisted %s" % (target[3], 'Light Bash')))
+            self.handle_TellRoom(str("%s resisted %s that was cast by %s" % (target[3], 'Light Bash', self.name)))
+            self.MobActiveTest()
+        reactor.callLater(16.0, self.SkillCooldown, 1, 'Light Bash')
 
-    def priestBonus(): #level 2
+    def priestBonus(self): #level 2
         self.constitution += 1
         self.wisdom += 1
+        self.sendLine("Gained Priest Bonus I (+1 Constitution, +1 Wisdom)")
 
     def targetHeal(self, target): #level 3, 12MP
-        if self.skill3 is False:
+        if self.skill2 is False:
             self.sendLine('Heal is not ready yet')
+            return
+        if self.mana < 12:
+            self.sendLine("Not enough mana for Heal")
+            return
         diction = self.users
         target = str(target)
         if target in(None, ''):
             self.sendLine('Invalid target name')
             return
         atk = diction.get(target)
-        healamt = int((1.5*self.wisdom)+(0.5*self.intellegence))
+        if atk in('', None):
+            self.sendLine("Target does not exist")
+            return
+        if atk.room != self.room:
+            self.sendLine("Player is not in the same room as you")
+        self.skill2 = False
+        self.mana = self.mana - 12
+        healamtmax = int((1.5*self.wisdom)+(0.5*self.intellegence))
+        healamtmin = healamtmax / 2
+        healamt = random.randint(healamtmin, healamtmax)
         atk.health += healamt
-        self.sendLine('You have healed %s for %sHP!' % target, healamt)
-        atk.sendLine('You have been healed for %s by %s!' % healamt, self.name)
+        if atk.health > atk.maxhealth:
+            healchange = atk.health - atk.maxhealth
+            atk.health = atk.maxhealth
+            healamt = healamt - healchange
+        if atk.name == self.name:
+            self.sendLine(str("You have healed yourself for %s HP" % healamt))
+        else:
+            self.sendLine(str('You have healed %s for %sHP!' % (target, healamt)))
+            atk.sendLine(str('You have been healed for %s by %s!' % (healamt, self.name)))
+        reactor.callLater(4.0, self.SkillCooldown, 2, 'Heal')
 
     def lightStrike(self, target): #level 5, 16MP
-        if self.heavyhit is False:
+        self.targetslot = target
+        if self.skill3 is False:
             self.sendLine("Light Strike not ready")
             return
+        if self.mana < 16:
+            self.sendLine("Not enough mana for Light Strike")
+            return
+        self.mana = self.mana - 16
+        self.skill3 = False
         self.TargetMob(target)
         target = self.target
         hitmax = 100 + int(target[13])
@@ -3314,148 +3892,236 @@ class Chat(LineReceiver):
             offhandmin = int(offhandmin)
             offhandmax = self.offhandvalmax * 0.75
             offhandmax = int(offhandmax)
-            attackmin = self.mainhandvalmin + offhandmin
-            attackmax = self.mainhandvalmax + offhandmax
-        attack = random.randint(attackmin, attackmax) + self.strengthdamage
+            attackmin = attackmin + offhandmin
+            attackmax = attackmax + offhandmax
+        attack = random.randint(attackmin, attackmax)
         if(hit <= self.accuracy):
             af = float(self.attack)
             attackmod = af / int(target[9])
             attack = float(attack)
+            if attack > 2.0:
+                attack = 2
             damage = attackmod * attack
-            LightStrikeDamage = self.wisdom / 2
-            damage += LightStrikeDamage
-            self.SkillAttackMob(damage, 'Light Strike')
-            reactor.callLater(24.0, self.SkillCooldown(4))
+            LightStrikeDamagemin = self.wisdom / 5
+            LightStrikeDamagemax = self.wisdom / 2
+            damage = damage + random.randint(LightStrikeDamagemin, LightStrikeDamagemax) + self.magicdamage
+            self.SkillAttackMob(int(damage), 'Light Strike')
+            self.MobActiveTest(damage)
         else:
-            self.sendLine("You missed the %s with %s" % (target[3], 'Light Strike'))
-            self.handle_TellRoom("%s missed the %s with %s" % (self.name, target[3], 'Light Strike'))
+            self.sendLine(str("You missed the %s with %s" % (target[3], 'Light Strike')))
+            self.handle_TellRoom(str("%s missed the %s with %s" % (self.name, target[3], 'Light Strike')))
+            self.MobActiveTest()
+        reactor.callLater(24.0, self.SkillCooldown, 3, 'Light Strike')
 
     def groupHeal(self): #level 7, 18MP
-        print "under construction"
-        #heal = (0.5*widdom)
-        #heals all players in room
-        #would essentially just health++ to each player in RoomPlayers table
-        #but I'm lazy right now
+#        try:
+        if self.mana < 18:
+            self.sendLine("Not enough mana for Group Heal")
+            return
+        if self.skill4 == False:
+            self.sendLine("Group Heal not refreshed yet")
+            return
+        if self.partybool is False:
+            self.sendLine("Not in a party, so Group Heal didn't execute")
+            return
+        else:
+            self.mana = self.mana - 18
+            self.skill4 = False
+            party = self.party
+            try:
+                party[0]
+                countmax = 0
+            except:
+                pass
+            try:
+                party[1]
+                countmax = countmax + 1
+            except:
+                pass
+            try:
+                party[2]
+                countmax = countmax + 1
+            except:
+                pass
+            try:
+                party[3]
+                countmax = countmax + 1
+            except:
+                pass
+            try:
+                party[4]
+                countmax = countmax + 1
+            except:
+                pass
+            try:
+                party[5]
+                countmax = countmax + 1
+            except:
+                pass
+            global userlist
+            diction = userlist
+            count = 0
+            party = self.party
+            while count <= countmax:
+                healmin = self.wisdom / 8
+                healmax = self.wisdom / 4
+                healamt = random.randint(healmin, healmax) + self.magicdamage
+                person = party[count]
+                atk = diction.get(person)
+                atk.health += healamt
+                if atk.health > atk.maxhealth:
+                    healchange = atk.health - atk.maxhealth
+                    atk.health = atk.maxhealth
+                    healamt = healamt - healchange
+                if atk.name == self.name:
+                    self.sendLine(str("You have healed yourself for %s HP" % healamt))
+                else:
+                    self.sendLine(str('You have healed %s for %sHP!' % (atk.name, healamt)))
+                    atk.sendLine(str('You have been healed for %s by %s!' % (healamt, self.name)))
+                count = count + 1
+            reactor.callLater(30.0, self.SkillCooldown, 4, 'Group Heal')
+#        except:
+#            print "Group Heal failed"
 
 ########
 # Mage #
 ########
 ############### MAGICIAN ####################
     def fireball(self, target): #level 1, 8MP
-        if self.heavyhit is False:
+        self.targetslot = target
+        if self.skill1 is False:
             self.sendLine("Fireball not ready")
             return
+        if self.mana < 8:
+            self.sendLine("Not enough mana for Fireball")
+            return
         self.TargetMob(target)
-        target = self.target
+        try :
+            target = self.target
+        except:
+            self.sendLine("Invalid Target")
+            return
+        self.skill1 = False
+        self.mana = self.mana - 8
         hitmax = 100 + int(target[13])
-        hit = random.randint(1, hitmax)
-        attackmin = self.intellegence * 0.33
-        attackmax = self.intellegence* 0.66
-        if(self.offhandtype == 'Weapon'):
-            offhandmin = self.offhandvalmin * 0.75
-            offhandmin = int(offhandmin)
-            offhandmax = self.offhandvalmax * 0.75
-            offhandmax = int(offhandmax)
-            attackmin = self.mainhandvalmin + offhandmin
-            attackmax = self.mainhandvalmax + offhandmax
-        attack = random.randint(attackmin, attackmax) + self.strengthdamage
-        # target[15] = Mdefense
+        attackmin = int(self.intellegence * 0.33)
+        attackmax = int(self.intellegence * 0.66)
+        attack = random.randint(attackmin, attackmax) + self.magicdamage
         mob_magic_def = int(target[15])
         mage_magic_atk = self.mattack
-        magicacc = ((mage_magic_atk - mob_magic_def) * 0.80)
-        if(hit <= magicacc):
-            af = float(self.attack)
-            attackmod = af / int(target[9])
-            attack = float(attack)
-            damage = attackmod * attack
-            LightStrikeDamage = self.wisdom / 2
-            damage += LightStrikeDamage
+        magicmod = mage_magic_atk / mob_magic_def
+        hitmax = 100 + int(0.75 * mob_magic_def)
+        hit = random.randint(1, hitmax)
+        if magicmod > 1.25:
+            magicmod = 1.25
+        attack = int(attack * magicmod)
+        hitacc = self.accuracy
+        if(hit <= self.magicaccuracy):
+            damage = attack
             self.SkillAttackMob(damage, 'Fireball')
-            reactor.callLater(16, self.SkillCooldown(1))
+            self.MobActiveTest(damage)
         else:
-            self.sendLine("You missed the %s with %s" % (target[3], 'Fireball'))
-            self.handle_TellRoom("%s missed the %s with %s" % (self.name, target[3], 'Fireball'))
+            self.sendLine(str("%s resisted your spell, %s!" % (target[3], 'Fireball')))
+            self.handle_TellRoom(str("%s resisted %s cast by %s" % (target[3], 'Fireball', self.name)))
+            self.MobActiveTest()
+        reactor.callLater(8.0, self.SkillCooldown, 1, 'Fireball')
 
     def mageBonusI(self): #level 2
         self.wisdom += 1
         self.intellegence += 1
+        self.sendLine("Gained Magician Bonus I (+1 Wisdom, +1 Intellegence)")
 
     def manaRegen(self): #level 3
-        self.manaregen += 1 #NOTE This may or may not be the correct variable
+        self.manaregenbonus += 2
+        self.manaregen += 2
+        self.sendLine("Gained Mana Regen Bonus I (+2 mana regen)")
 
     def iceBolt(self, target): #level 5, 14 MP
-        #also doesn't include stun - stun is 0.6+(matk - mdef)
-        if self.heavyhit is False:
-            self.sendLine("Ice bolt not ready")
+        self.targetslot = target
+        if self.skill2 is False:
+            self.sendLine("Ice Bolt not ready")
+            return
+        if self.mana < 14:
+            self.sendLine("Not enough mana for Ice Bolt")
             return
         self.TargetMob(target)
-        target = self.target
+        try :
+            target = self.target
+        except:
+            self.sendLine("Invalid Target")
+            return
+        self.skill2 = False
+        self.mana = self.mana - 14
         hitmax = 100 + int(target[13])
-        hit = random.randint(1, hitmax)
-        attackmin = self.intellegence * 0.25
-        attackmax = self.intellegence* 0.5
-        if(self.offhandtype == 'Weapon'):
-            offhandmin = self.offhandvalmin * 0.75
-            offhandmin = int(offhandmin)
-            offhandmax = self.offhandvalmax * 0.75
-            offhandmax = int(offhandmax)
-            attackmin = self.mainhandvalmin + offhandmin
-            attackmax = self.mainhandvalmax + offhandmax
-        attack = random.randint(attackmin, attackmax) + self.strengthdamage
-        # target[15] = Mdefense
+        attackmin = int(self.intellegence * 0.25)
+        attackmax = int(self.intellegence * 0.5)
+        attack = random.randint(attackmin, attackmax) + self.magicdamage
         mob_magic_def = int(target[15])
         mage_magic_atk = self.mattack
-        magicacc = ((mage_magic_atk - mob_magic_def) * 0.80)
-        if(hit <= magicacc):
-            af = float(self.attack)
-            attackmod = af / int(target[9])
-            attack = float(attack)
-            damage = attackmod * attack
-            LightStrikeDamage = self.wisdom / 2
-            damage += LightStrikeDamage
+        magicmod = mage_magic_atk / mob_magic_def
+        hitmax = 100 + int(0.75 * mob_magic_def)
+        hit = random.randint(1, hitmax)
+        if magicmod > 1.25:
+            magicmod = 1.25
+        attack = int(attack * magicmod)
+        hitacc = self.accuracy
+        if(hit <= self.magicaccuracy):
+            damage = attack
             self.SkillAttackMob(damage, 'Ice Bolt')
-            reactor.callLater(12, self.SkillCooldown(4))
+            self.MobActiveTest(damage)
+            if random.randint(1, 100) <= 60:
+                name = target[0]
+                c.execute("""UPDATE ActiveMonster SET Stun=? WHERE RandomID=?""", ('True', name))
+                conn.commit()
+                reactor.callLater(5.0, self.lightSleep)
+                self.sendLine(str("Stunned the %s!" % target[3]))
         else:
-            self.sendLine("You missed the %s with %s" % (target[3], 'Ice Bolt'))
-            self.handle_TellRoom("%s missed the %s with %s" % (self.name, target[3], 'Ice Bolt'))
+            self.sendLine(str("%s resisted your spell, %s!" % (target[3], 'Ice Bolt')))
+            self.handle_TellRoom(str("%s resisted %s cast by %s" % (target[3], 'Ice Bolt', self.name)))
+            self.MobActiveTest()
+        reactor.callLater(12.0, self.SkillCooldown, 2, 'Ice Bolt')
 
     def thunderBolt(self, target): #level 7, 20mp
-        if self.heavyhit is False:
-            self.sendLine("Thunderbolt not ready")
+        self.targetslot = target
+        if self.skill3 is False:
+            self.sendLine("Thunder Bolt not ready")
+            return
+        if self.mana < 20:
+            self.sendLine("Not enough mana for Thunder Bolt")
             return
         self.TargetMob(target)
-        target = self.target
-        hitmax = 100 + int(target[13])
-        hit = random.randint(1, hitmax)
-        attackmin = self.intellegence * 0.33
-        attackmax = self.intellegence* 0.66
-        if(self.offhandtype == 'Weapon'):
-            offhandmin = self.offhandvalmin * 0.75
-            offhandmin = int(offhandmin)
-            offhandmax = self.offhandvalmax * 0.75
-            offhandmax = int(offhandmax)
-            attackmin = self.mainhandvalmin + offhandmin
-            attackmax = self.mainhandvalmax + offhandmax
-        attack = random.randint(attackmin, attackmax) + self.strengthdamage
-        # target[15] = Mdefense
+        try :
+            target = self.target
+        except:
+            self.sendLine("Invalid Target")
+            return
+        self.skill1 = False
+        self.mana = self.mana - 20
+        attackmin = int(self.intellegence * 0.33)
+        attackmax = int(self.intellegence * 0.66)
+        attack = random.randint(attackmin, attackmax) + self.magicdamage
         mob_magic_def = int(target[15])
         mage_magic_atk = self.mattack
-        magicacc = ((mage_magic_atk - mob_magic_def) * 0.80)
-        if(hit <= magicacc):
-            af = float(self.attack)
-            attackmod = af / int(target[9])
-            attack = float(attack)
+        magicmod = mage_magic_atk / mob_magic_def
+        hitmax = 100 + int(0.75 * mob_magic_def)
+        hit = random.randint(1, hitmax)
+        if magicmod > 1.25:
+            magicmod = 1.25
+        attack = int(attack * magicmod)
+        if(hit <= self.magicaccuracy):
+            damage = attack
             critchance = random.randint(1, 100)
-            if critchance >= 60:
+            if critchance <= 40:
                 damage = damage * 2
-            damage = attackmod * attack
-            LightStrikeDamage = self.wisdom / 2
-            damage += LightStrikeDamage
-            self.SkillAttackMob(damage, 'Thunderbolt')
-            reactor.callLater(24, self.SkillCooldown(5))
+                self.sendLine(str("Thunder Bolt pierced through %s's defence!" % target[3]))
+            self.SkillAttackMob(damage, 'Thunder Bolt')
+            self.MobActiveTest(damage)
         else:
-            self.sendLine("You missed the %s with %s" % (target[3], 'Thunderbolt'))
-            self.handle_TellRoom("%s missed the %s with %s" % (self.name, target[3], 'Thunderbolt'))
+            self.sendLine(str("%s resisted your spell, %s!" % (target[3], 'Thunder Bolt')))
+            self.handle_TellRoom(str("%s resisted %s cast by %s" % (target[3], 'Thunder Bolt', self.name)))
+            self.MobActiveTest()
+        reactor.callLater(24.0, self.SkillCooldown, 3, 'Thunder Bolt')
+
 ################################
 ##                            ##
 ##         END SKILLS         ##
@@ -3507,8 +4173,9 @@ class Chat(LineReceiver):
                 self.sendLine("/pa <user>           *Attack a player")
                 self.sendLine('/party invite <user> *Invites user to your party')
                 self.sendLine("/pk                  *Toggles Player fighting on/off (5min wait)")
-                self.sendLine("/skills              *Shows your characters skills")
+                self.sendLine("/skills              *Shows your characters skill levels")
                 self.sendLine("/spawn               *Return to spawn immeadiately (30min cooldown)")
+                self.sendLine("/spells              *Shows your combat skills/spells")
                 self.sendLine("/stats               *Looks up your own stats")
                 self.sendLine("/time                *Displays current Arr'Fia time")
                 self.sendLine("/w <user>            *Enter private chat mode")
@@ -3527,12 +4194,16 @@ class Chat(LineReceiver):
                 self.sendLine("/pa <user>           *Attack a player")
                 self.sendLine('/party invite <user> *Invites user to your party')
                 self.sendLine("/pk                  *Toggles Player fighting on/off (5min wait)")
-                self.sendLine("/skills              *Shows your characters skills")
+                self.sendLine("/setlevel <user> <level>")
+                self.sendLine("/setexp <user> <exptnl>")
+                self.sendLine("/skills              *Shows your characters skill levels")
+                self.sendLine("/spells              *Shows your combat skills/spells")
                 self.sendLine("/spawn               *Return to spawn immeadiately (30min cooldown)")
                 self.sendLine("/stop <reason>       *Kicks everyone off the server then stops it")
                 self.sendLine("/stats               *Looks up your own stats")
                 self.sendLine("/time                *Displays current Arr'Fia time")
                 self.sendLine("/tp <user or room>   *Teleports you to a player or roomID")
+                self.sendLine("/update (room)")
                 self.sendLine("/w <user>            *Enter private chat mode")
             return
         if(message == '/time'):
@@ -3549,6 +4220,28 @@ class Chat(LineReceiver):
             return
         if(message == '/skills'):
             self.Skilllist()
+            return
+        if(message == '/update room'):
+            if self.adminmode == True:
+                self.state = 'UpdateRoom1'
+                self.sendLine("Which room would you like to update?")
+            else:
+                self.sendLine("Command not available")
+            return
+        if(message[0:9] == '/setlevel'):
+            if self.adminmode == True:
+                line = message[10:]
+                self.playersearch(line, 'level')
+        if(message[0:7] == '/setexp'):
+            if self.adminmode == True:
+                line = message[8:]
+                self.playersearch(line, 'exp')
+        if(message == '/spells'):
+            self.Spells()
+            return
+        if(message[0:5] == '/cast'):
+            st = message[6:]
+            self.Cast(st)
             return
         if(message == '/create room'):
             if self.adminmode == False:
@@ -3606,8 +4299,12 @@ class Chat(LineReceiver):
             else:
                 pass
             return
-        if(message == '/look'):
-            self.LOOK()
+        if(message[0:5] == '/look'):
+            direction = message[6:]
+            if direction == '':
+                self.LOOK()
+            else:
+                self.LOOK(direction)
             return
         if(message == '/levelup'):
             self.LevelUP()
@@ -3730,10 +4427,33 @@ class Chat(LineReceiver):
     def CCCHECK2(self, answer):
         if answer in('con', 'Con', 'Continue', 'continue'):
             self.sendLine("You have successfully leveled up to level %s!" % (self.level))
+            self.sendLine("You will want to relog to update your info correctly")
             curexptnl = self.exptnl
-            nextexptnl = self.level * 1000
+            nextexptnl = (self.level / 2) * 1000
             self.exptnl = curexptnl + nextexptnl
             self.state = "CHAT"
+            if self.classname == 'Warrior':
+                if self.level == 2:
+                    self.warriorBonusI()
+            if self.classname == 'Rogue':
+                if self.level == 2:
+                    self.criticalPassive()
+                if self.level == 3:
+                    self.rogueBonusI()
+            if self.classname == 'Priest':
+                if self.level == 2:
+                    self.priestBonus()
+            if self.classname == 'Magician':
+                if self.level == 2:
+                    self.mageBonusI()
+                if self.level == 3:
+                    self.manaRegen()
+            self.maxhealthbonus = self.maxhealthbonus + int(self.constitution / 4)
+            self.maxmanabonus = self.maxmanabonus + int(self.wisdom / 4)
+            self.maxhealth = self.maxhealth + int(self.constitution / 4)
+            self.maxmana = self.maxmana + int(self.wisdom / 4)
+            self.EQUIPSTART()
+
         if answer in('q', 'Q', 'quit', 'Quit'):
             self.sendLine("Returned to previous attributes")
             self.level = self.level - 1
@@ -4020,11 +4740,6 @@ class Chat(LineReceiver):
                     self.threatCalculator(1, mob)
                 fightbool = str(test[17])
                 if fightbool == 'False':
-                    #mobid = str(test[0])
-                    #mob = str(test[0])
-                    #mobspawner = {mobid: task.LoopingCall(MobFight(mobid))}
-                    #a = mobspawner.get(mobid)
-                    #a.start(3.0)
                     c.execute('''UPDATE ActiveMonster SET AttackBool='True' WHERE RandomID=?''', mobs)
                     conn.commit()
                     reactor.callLater(3.0, MobFight, mob)
@@ -4052,7 +4767,6 @@ class Chat(LineReceiver):
         update = (mobs, region,)
         c.execute('''UPDATE Regions SET Mobcount=? WHERE Name=?''', update)
         conn.commit()
-
 
     def handle_TellRoom(self, line):
         global c
@@ -4192,6 +4906,30 @@ class Chat(LineReceiver):
             room = player.room
             player.sendLine(message)
 
+    def playersearch(self, line, function):
+        try:
+            searchline = line
+            n = 1
+            while n < 20:
+                if searchline[n] == ' ':
+                    name = searchline[0:n]
+                    global userlist
+                    if name in userlist:
+                        n = n + 1
+                        if function == 'level':
+                            level = int(searchline[n:])
+                            self.LevelSet(name, level)
+                        if function == 'exp':
+                            exp = int(searchline[n:])
+                            self.ExpSet(name, exp)
+                    break
+                else:
+                    n = n + 1
+                    if n == 21:
+                        self.sendLine("Player not found")
+        except:
+            self.sendLine("Error Occured")
+
     def handle_WHISP_ini(self, name):
         self.whisper = name
         diction = self.users
@@ -4222,8 +4960,8 @@ class Chat(LineReceiver):
             self.state = "CHANGEPASS"
             return
 
-    def LOOK(self):
-        self.displayExits()
+    def LOOK(self, direction=None):
+        self.displayExits(direction)
 
     def SPAWN(self):
         self.handle_CLEARSCREEN()
@@ -4235,8 +4973,83 @@ class Chat(LineReceiver):
         reactor.callLater(600.0, self.SpawnReset)
         pass
 
-    def Cast(self, skill, target):
-        pass
+    def Cast(self, st):
+        if self.classname == 'Warrior':
+            if st[0:9] == 'Heavy Hit':
+                target = st[10:]
+                self.HeavyHit(target)
+                return
+            if self.level < 4:
+                return
+            if st[0:10] == 'Double Hit':
+                target = st[11:]
+                self.doubleHit(target)
+                return
+            if self.level < 5:
+                return
+            if st[0:5] == 'Taunt':
+                target = st[6:]
+                self.taunt(target)
+                return
+            if self.level < 7:
+                return
+            if st[0:6] == 'Stance':
+                type = st[7:]
+                self.warriorStance(type)
+                return
+        if self.classname == 'Priest':
+            if st[0:10] == 'Light Bash':
+                target = st[11:]
+                self.lightBash(target)
+                return
+            if self.level < 3:
+                return
+            if st[0:11] == 'Single Heal':
+                target = st[12:]
+                self.targetHeal(target)
+            if self.level < 5:
+                return
+            if st[0:12] == 'Light Strike':
+                target = st[13:]
+                self.lightStrike(target)
+            if self.level < 7:
+                return
+            if st[0:10] == 'Group Heal':
+                self.groupHeal()
+        if self.classname == 'Rogue':
+            if st[0:13] == 'Double Strike':
+                target = st[14:]
+                self.doubleStrike(target)
+                return
+            if self.level < 5:
+                return
+            if st[0:12] == 'Dirty Strike':
+                target = st[13:]
+                self.dirtyStrike(target)
+                return
+            if self.level < 7:
+                return
+            if st[0:13] == 'Triple Strike':
+                target = st[14:]
+                self.tripleStrike(target)
+                return
+        if self.classname == 'Magician':
+            if st[0:8] == 'Fireball':
+                target = st[9:]
+                self.fireball(target)
+                return
+            if self.level <  5:
+                return
+            if st[0:8] == 'Ice Bolt':
+                target = st[9:]
+                self.iceBolt(target)
+                return
+            if self.level < 7:
+                return
+            if st[0:12] == 'Thunder Bolt':
+                target =st[13:]
+                self.thunderBolt(target)
+                return
 
     def Skilllist(self):
         self.sendLine("Adventure Skills    Level      Exp needed")
@@ -4255,19 +5068,107 @@ class Chat(LineReceiver):
         self.sendLine("Tanning               %3s           %5s" % (self.Tanning, self.Tanningtnl))
         self.sendLine("Woodcutting           %3s           %5s" % (self.Woodcutting, self.Woodcuttingtnl))
 
+    def Spells(self):
+        self.handle_CLEARSCREEN()
+        self.sendLine("Spells Available:")
+        if self.classname == 'Warrior':
+            self.sendLine("Heavy Hit          - Adds half of your strength to a hit (Active - 10MP)")
+            if self.level >= 2:
+                self.sendLine("Warrior Bonus I    - +1 Strength, + 1 Constitution (Passive)")
+            if self.level >= 4:
+                self.sendLine("Double Hit         - Attacks the target twice (Active - 8MP)")
+            if self.level >= 5:
+                self.sendLine("Taunt              - Taunts the target into attacking you (Active - 4MP)")
+            if self.level >= 7:
+                self.sendLine("Stance (offensive, defensive, normal)   - Augments your attack/defence by to a 125%/75% ratio depending on type (Passive Toggle)")
+        if self.classname == 'Rogue':
+            self.sendLine("Double Strike      - Attacks the target twice (Active - 8MP)")
+            if self.level >= 2:
+                self.sendLine("Critical Bonus I   - Adds 5% to your critical chance (Passive)")
+            if self.level >= 3:
+                self.sendLine("Rogue Bonus I      - +1 Strength, +1 Dexterity (Passive)")
+            if self.level >= 5:
+                self.sendLine("Dirty Strike       - Temporarily blinds the opponet(Active - 12MP)")
+            if self.level >= 7:
+                self.sendLine("Triple Strike      - Attacks the target three times (Active - 16MP)")
+        if self.classname == 'Priest':
+            self.sendLine("Light Bash         - Deals 0.25 * Wisdom damage, and has a chance to stun (Active - 8MP)")
+            if self.level >= 2:
+                self.sendLine("Priest Bonus I     - +1 Constitution, +1 Wisdom (Passive)")
+            if self.level >= 3:
+                self.sendLine("Single Heal        - Heals the target for 1.5 * Wisdom + 0.5 * Intellegence (Active - 12MP)")
+            if self.level >= 5:
+                self.sendLine("Light Strike       - Adds up to half of your wisdom as damage onto your normal attack (Active - 16MP)")
+            if self.level >= 7:
+                self.sendLine("Group Heal         - Heals each player in your party for up to half of your wisdom (Active - 18MP)")
+        if self.classname == 'Magician':
+            self.sendLine("Fireball           - Deals between 1/3 * Intellegence to 2/3 * Intellegence + additional magic damage (Active - 8MP)")
+            if self.level >= 2:
+                self.sendLine("Magician Bonus I   - +1 Wisdom, +1 Intellegence (Passive)")
+            if self.level >= 3:
+                self.sendLine("Mana Regen Bonus I - +1 to mana regen (Passive)")
+            if self.level >= 5:
+                self.sendLine("Ice Bolt           - Deals between 1/4 * Intellegence to 1/2 * Intellegence + additional damage. Has chance to stun (Active - 14MP)")
+            if self.level >= 7:
+                self.sendLine("Thunder Bolt       - Deals between 1/3 * Intellegence to 2/3 * Intellegence + 40% chance to crit (Active - 20MP)")
+        self.sendLine("")
+        self.sendLine("Use /cast <name> <target> to use a spell")
+
     def Time(self):
         global c
         c.execute('''SELECT * From ServerTime''')
         fetch = c.fetchone()
         localmin = int(fetch[1])
+        if localmin in(0, 1, 2, 3, 4, 5, 6, 7, 8, 9):
+            localmin = '0' + str(localmin)
         localhour = int(fetch[2])
         night = bool(fetch[3])
+        day = int(fetch[4])
+        if day == 1:
+            day = '1st'
+        if day == 2:
+            day = '2nd'
+        if day == 3:
+            day = '3rd'
+        else:
+            check = isinstance(day, str)
+            if check == True:
+                pass
+            else:
+                day = str(day) + 'th'
+        month = int(fetch[5])
+        if month == 1:
+            monthname = 'Ianuarius'
+        if month == 2:
+            monthname = 'Februarius'
+        if month == 3:
+            monthname = 'Matrius'
+        if month == 4:
+            monthname = 'Aprilis'
+        if month == 5:
+            monthname = 'Maius'
+        if month == 6:
+            monthname = 'Iunius'
+        if month == 7:
+            monthname = 'Quintilis'
+        if month == 8:
+            monthname = 'Augustus'
+        if month == 9:
+            monthname = 'Lapsus'
+        if month == 10:
+            monthname = 'Bruma'
+        if month == 11:
+            monthname = 'Frigus'
+        if month == 12:
+            monthname = 'Glacialis'
         if night == True:
             localtime = 'Night-time'
         else:
             localtime = 'Day-time'
-        line = 'Arrfia Time : ' + str(localhour) + ':' + str(localmin) + ' ' + localtime
+        line = 'Arrfia Date : It is the ' + str(day) + ' day of ' + monthname
+        line2 = 'Arrfia Time : ' + str(localhour) + ':' + str(localmin) + '   ' + localtime
         self.sendLine(line)
+        self.sendLine(line2)
 
     def SpawnReset(self):
         self.spawn = True
@@ -4278,6 +5179,7 @@ class Chat(LineReceiver):
         self.handle_CLEARSCREEN()
         self.sendLine("You may now close the window safely")
         self.connectionLost(leave)
+        self.state = "DISCONNECTED"
 
     def rest(self):
         self.health = self.maxhealth
@@ -4307,70 +5209,73 @@ class Chat(LineReceiver):
             self.sendLine("Whisper failed, please type /c and try again")
 
     def threatCalculator(self, damage, RandomID):
-        found = False
-        dam = damage
-        multi = self.threatmultiplier
-        threat = dam * multi
-        ID = (RandomID,)
-        global c
-        c.execute('''SELECT * FROM MonsterThreat WHERE RandomID=?''', ID)
-        fetch = c.fetchone()
-        count = 1
-        while count <= 11:
-            name = fetch[count]
-            name = str(name)
-            if name == self.name:
-                found = True
-                count += 1
-                curthreat = fetch[count]
-                curthreat = curthreat + threat
-                if count == 2:
-                    c.execute("UPDATE MonsterThreat SET Threat1=? WHERE RandomID=?", (curthreat, RandomID))
-                if count == 4:
-                    c.execute("UPDATE MonsterThreat SET Threat2=? WHERE RandomID=?", (curthreat, RandomID))
-                if count == 6:
-                    c.execute("UPDATE MonsterThreat SET Threat3=? WHERE RandomID=?", (curthreat, RandomID))
-                if count == 8:
-                    c.execute("UPDATE MonsterThreat SET Threat4=? WHERE RandomID=?", (curthreat, RandomID))
-                if count == 10:
-                    c.execute("UPDATE MonsterThreat SET Threat5=? WHERE RandomID=?", (curthreat, RandomID))
-                if count == 12:
-                    c.execute("UPDATE MonsterThreat SET Threat6=? WHERE RandomID=?", (curthreat, RandomID))
-            else:
-                count = count + 2
-        count2 = 1
-        if found is False:
-            while count2 <= 11:
-                name = fetch[count2]
+        try:
+            found = False
+            dam = damage
+            multi = self.threatmultiplier
+            threat = dam * multi
+            ID = (RandomID,)
+            global c
+            c.execute('''SELECT * FROM MonsterThreat WHERE RandomID=?''', ID)
+            fetch = c.fetchone()
+            count = 1
+            while count <= 11:
+                name = fetch[count]
                 name = str(name)
-                if name in('', None):
-                    if count2 == 1:
-                        c.execute("UPDATE MonsterThreat SET Player1=? WHERE RandomID=?", (self.name, RandomID))
-                        c.execute("UPDATE MonsterThreat SET Threat1=? WHERE RandomID=?", (threat, RandomID))
-                        count2 = 12
-                    if count2 == 3:
-                        c.execute("UPDATE MonsterThreat SET Player2=? WHERE RandomID=?", (self.name, RandomID))
-                        c.execute("UPDATE MonsterThreat SET Threat2=? WHERE RandomID=?", (threat, RandomID))
-                        count2 = 12
-                    if count2 == 5:
-                        c.execute("UPDATE MonsterThreat SET Player3=? WHERE RandomID=?", (self.name, RandomID))
-                        c.execute("UPDATE MonsterThreat SET Threat3=? WHERE RandomID=?", (threat, RandomID))
-                        count2 = 12
-                    if count2 == 7:
-                        c.execute("UPDATE MonsterThreat SET Player4=? WHERE RandomID=?", (self.name, RandomID))
-                        c.execute("UPDATE MonsterThreat SET Threat4=? WHERE RandomID=?", (threat, RandomID))
-                        count2 = 12
-                    if count2 == 9:
-                        c.execute("UPDATE MonsterThreat SET Player5=? WHERE RandomID=?", (self.name, RandomID))
-                        c.execute("UPDATE MonsterThreat SET Threat5=? WHERE RandomID=?", (threat, RandomID))
-                        count2 = 12
-                    if count2 == 11:
-                        c.execute("UPDATE MonsterThreat SET Player6=? WHERE RandomID=?", (self.name, RandomID))
-                        c.execute("UPDATE MonsterThreat SET Threat6=? WHERE RandomID=?", (threat, RandomID))
-                        count2 = 12
+                if name == self.name:
+                    found = True
+                    count += 1
+                    curthreat = fetch[count]
+                    curthreat = curthreat + threat
+                    if count == 2:
+                        c.execute("UPDATE MonsterThreat SET Threat1=? WHERE RandomID=?", (curthreat, RandomID))
+                    if count == 4:
+                        c.execute("UPDATE MonsterThreat SET Threat2=? WHERE RandomID=?", (curthreat, RandomID))
+                    if count == 6:
+                        c.execute("UPDATE MonsterThreat SET Threat3=? WHERE RandomID=?", (curthreat, RandomID))
+                    if count == 8:
+                        c.execute("UPDATE MonsterThreat SET Threat4=? WHERE RandomID=?", (curthreat, RandomID))
+                    if count == 10:
+                        c.execute("UPDATE MonsterThreat SET Threat5=? WHERE RandomID=?", (curthreat, RandomID))
+                    if count == 12:
+                        c.execute("UPDATE MonsterThreat SET Threat6=? WHERE RandomID=?", (curthreat, RandomID))
                 else:
-                    count2 = count2 + 2
-        conn.commit()
+                    count = count + 2
+            count2 = 1
+            if found is False:
+                while count2 <= 11:
+                    name = fetch[count2]
+                    name = str(name)
+                    if name in('', None):
+                        if count2 == 1:
+                            c.execute("UPDATE MonsterThreat SET Player1=? WHERE RandomID=?", (self.name, RandomID))
+                            c.execute("UPDATE MonsterThreat SET Threat1=? WHERE RandomID=?", (threat, RandomID))
+                            count2 = 12
+                        if count2 == 3:
+                            c.execute("UPDATE MonsterThreat SET Player2=? WHERE RandomID=?", (self.name, RandomID))
+                            c.execute("UPDATE MonsterThreat SET Threat2=? WHERE RandomID=?", (threat, RandomID))
+                            count2 = 12
+                        if count2 == 5:
+                            c.execute("UPDATE MonsterThreat SET Player3=? WHERE RandomID=?", (self.name, RandomID))
+                            c.execute("UPDATE MonsterThreat SET Threat3=? WHERE RandomID=?", (threat, RandomID))
+                            count2 = 12
+                        if count2 == 7:
+                            c.execute("UPDATE MonsterThreat SET Player4=? WHERE RandomID=?", (self.name, RandomID))
+                            c.execute("UPDATE MonsterThreat SET Threat4=? WHERE RandomID=?", (threat, RandomID))
+                            count2 = 12
+                        if count2 == 9:
+                            c.execute("UPDATE MonsterThreat SET Player5=? WHERE RandomID=?", (self.name, RandomID))
+                            c.execute("UPDATE MonsterThreat SET Threat5=? WHERE RandomID=?", (threat, RandomID))
+                            count2 = 12
+                        if count2 == 11:
+                            c.execute("UPDATE MonsterThreat SET Player6=? WHERE RandomID=?", (self.name, RandomID))
+                            c.execute("UPDATE MonsterThreat SET Threat6=? WHERE RandomID=?", (threat, RandomID))
+                            count2 = 12
+                    else:
+                        count2 = count2 + 2
+            conn.commit()
+        except:
+            print 'Threat calculator error for', self.name
 
 
 class ChatFactory(Factory):
@@ -4388,47 +5293,38 @@ class MobSpawner():
         global c
 
         self.spawnedregions = 'Spawned in... '
-        # ExordiorCave
-        self.MobMax = 15
-        self.SpawnRate = 5
-        self.Rooms = []
-        rooms = self.Rooms
-        counter = 13
-        while counter <= 29:
-            if counter in (20, 13, 14):
-                counter += 1
-            else:
-                rooms.append(counter)
-                counter += 1
-        self.Mobs = [1, 3, 7]
-        self.RoomMax = 2
-        self.regionname = 'Exordior Cave'
-        name = (self.regionname,)
-        c.execute('''SELECT * FROM Regions WHERE Name=?''', name)
-        test= c.fetchone()
-        self.Mobcount = test[1]
-        self.RandomMobGenerator()
-
-        # Exordior Mine
-        self.MobMax = 38
-        self.SpawnRate = 5
-        self.Rooms = []
-        rooms = self.Rooms
-        counter = 30
-        while counter <= 64:
-            if counter in(50, 30):
-                counter += 1
-            else:
-                rooms.append(counter)
-                counter += 1
-        self.Mobs = [4, 5, 10]
-        self.RoomMax = 3
-        self.regionname = 'Exordior Mine'
-        name = (self.regionname,)
-        c.execute('''SELECT * FROM Regions WHERE Name=?''', name)
-        test= c.fetchone()
-        self.Mobcount = test[1]
-        self.RandomMobGenerator()
+# Name, Mobcount, MobMax, SpawnRate, RoomMobMax, Roommin, Roommax
+        c.execute('SELECT * FROM Regions')
+        regions = c.fetchall()
+        for row in regions:
+            self.regionname = str(row[0])
+            self.MobMax = row[2]
+            self.SpawnRate = row[3]
+            self.Rooms = []
+            rooms = self.Rooms
+            counter = row[5]
+            countmax = row[6]
+            c.execute('SELECT * FROM RegionIgnoreRooms WHERE Name=?', (self.regionname,))
+            ignorerooms = c.fetchone()
+            while counter <= countmax:
+                if counter in ignorerooms:
+                    counter += 1
+                else:
+                    rooms.append(counter)
+                    counter += 1
+            c.execute('SELECT * FROM RegionMobs WHERE Name=?', (self.regionname,))
+            mobs = c.fetchone()
+            self.Mobs = []
+            mobcounter = 1
+            while mobcounter <= 10:
+                if mobs[mobcounter] == '':
+                    mobcounter = mobcounter + 1
+                else:
+                    mobid = mobs[mobcounter]
+                    self.Mobs.append(mobid)
+                    mobcounter = mobcounter + 1
+            self.Mobcount = row[1]
+            self.RandomMobGenerator()
 
         # For Mob Spawning
         self.health = 0
@@ -4506,8 +5402,8 @@ class MobSpawner():
         wis = mob[7]
         intel = mob[8]
         self.StatCreation(stren, con, dex, agi, wis, intel)
-        mob = (Randid, Mobtype, level, self.name, self.health, self.health, self.mana, self.mana, self.attack, self.defence, self.speed, self.critical, self.accuracy, self.dodge, self.mattack, self.mdefence, room, 'False', regionname)
-        c.execute('''INSERT INTO ActiveMonster VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', mob)
+        mob = (Randid, Mobtype, level, self.name, self.health, self.health, self.mana, self.mana, self.attack, self.defence, self.speed, self.critical, self.accuracy, self.dodge, self.mattack, self.mdefence, room, 'False', regionname, 'False')
+        c.execute('''INSERT INTO ActiveMonster VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', mob)
         threat = (Randid, '', 0, '', 0,'', 0, '', 0, '', 0, '', 0)
         c.execute('''INSERT INTO MonsterThreat VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''', threat)
 
@@ -4609,6 +5505,9 @@ class MobFight():
             return
         self.slot = 0
         self.attackspeed = 3.0
+        self.stun = result[19]
+        if self.stun == True:
+            self.MobTellRoom('Stun', 0)
         self.TryFight()
         if self.target == None:
             c.execute('''UPDATE ActiveMonster SET AttackBool='False' WHERE RandomID=?''', (self.id,))
@@ -4638,16 +5537,21 @@ class MobFight():
     def Attack(self, damage, target, attack):
         defence = float(target.defence)
         modifier = self.attack / defence
+        if modifier < 0.5:
+            modifier = 0.5
         modifier = damage * modifier
         damage = int(modifier)
         maxhit = 100 + target.dodge
         hit = random.randint(1, maxhit)
         if hit <= self.accuracy:
+            if damage <= 0:
+                glancechance = random.randint(1, 100)
+                if glancechance <= 35:
+                    self.MobTellRoom('glancing', 0)
+                else:
+                    damage = 1
             target.health = target.health - damage
             health = target.health
-            if damage <= 0:
-                self.MobTellRoom('glancing', 0)
-                return
             if health <= 0:
                 self.KillPlayer(target)
             else:
@@ -4708,6 +5612,19 @@ class MobFight():
                         count = count + 1
                         line = "%s missed %s" % (name, targetname)
                         target.sendLine(line)
+        if self.stun == 'True':
+            while(count <= 20):
+                teststr = test[count]
+                teststr = str(teststr)
+                if teststr in('', None):
+                    count = count + 1
+                else:
+                    diction = userlist
+                    target = str(teststr)
+                    target = diction.get(target)
+                    count = count + 1
+                    line = "%s is stunned" % (name)
+                    target.sendLine(line)
         if attack == 'glancing':
             while(count <= 20):
                 teststr = test[count]
@@ -4793,7 +5710,7 @@ class MobFight():
         target = target
         name = target.name
         mobname = str(self.name)
-        target.room = 0
+        target.room = 1
         target.state = "DEAD"
         line = "You were killed by %s. You were sent back to your most recent checkpoint..." % (mobname)
         target.sendLine(line)
@@ -4950,8 +5867,10 @@ class DayNight():
         self.minute = int(fetch[1])
         self.hour = int(fetch[2])
         self.night = bool(fetch[3])
+        self.day = int(fetch[4])
+        self.month = int(fetch[5])
         self.Time()
-        c.execute('''UPDATE ServerTime SET Minutes=?, Hours=?, Night=? WHERE Server='Server' ''', (self.minute, self.hour, self.night))
+        c.execute('''UPDATE ServerTime SET Minutes=?, Hours=?, Night=?, Day=?, Month=? WHERE Server='Server' ''', (self.minute, self.hour, self.night, self.day, self.month))
         conn.commit()
 
     def Time(self):
@@ -4971,6 +5890,11 @@ class DayNight():
                 else:
                     self.Night()
             if self.hour >= 13:
+                if self.night == True:
+                    self.day += 1
+                    if self.day >= 31:
+                        self.month += 1
+                        self.day = 1
                 self.hour -= 12
             newmin = newmin - 60
             self.minute = newmin
@@ -4983,7 +5907,7 @@ class DayNight():
         diction = userlist
         for key, value in diction.iteritems():
             player = diction.get(key)
-            player.sendLine("TIME : It is now night time")
+            player.sendLine("##TIME## : It is now night time")
         print "It is now Night"
 
     def AlmostNight(self):
@@ -4991,7 +5915,7 @@ class DayNight():
         diction = userlist
         for key, value in diction.iteritems():
             player = diction.get(key)
-            player.sendLine("TIME : It is starting to get dark...")
+            player.sendLine("##TIME## : It is starting to get dark...")
 
     def Day(self):
         self.night = False
@@ -4999,7 +5923,7 @@ class DayNight():
         diction = userlist
         for key, value in diction.iteritems():
             player = diction.get(key)
-            player.sendLine("TIME : It is now day time")
+            player.sendLine("##TIME## : It is now day time")
         print "It is now Day"
 
     def AlmostDay(self):
@@ -5007,9 +5931,10 @@ class DayNight():
         diction = userlist
         for key, value in diction.iteritems():
             player = diction.get(key)
-            player.sendLine("TIME : The sun begins to rise")
+            player.sendLine("##TIME## : The sun begins to rise")
 
-print "Server Started at localhost on Port : 8123"
+LocalTime()
+print localtime, "Server Started at localhost on Port : 8123"
 timer = task.LoopingCall(DayNight)
 timer.start(4.0)
 l = task.LoopingCall(MobSpawner)

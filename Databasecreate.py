@@ -3,22 +3,23 @@ def Create():
     import rooms
     import items
     import sys
-    import Databasecreate2
     sys.path.insert(0, 'C:\Users\Ben\Downloads\DatabaseInformation')
 
-    conn = sqlite3.connect('MUD.db')
+    conn = sqlite3.connect('Primary_Database.db')
     c = conn.cursor()
-    conn2 = sqlite3.connect('MUD2.db')
+    conn2 = sqlite3.connect('Backup.db')
     c2 = conn2.cursor()
 
 
     c.execute('''CREATE TABLE ID (Name, Password, Permission, ChatInstance)''')
     c.execute('''CREATE TABLE Placement (Name, Room)''')
-    c.execute('''CREATE TABLE Character (Name, Class, Level, Exp, Exptnl, Strength, Constitution, Dexterity, Agility, Wisdom, Intellegence, Race)''')
+    c.execute('''CREATE TABLE Character (Name, Class, Level, Exp, Exptnl, Strength, Constitution, Dexterity, Agility, Wisdom, Intellegence, Race, Gender)''')
     c.execute('''CREATE TABLE Inventory (Name, SLOT1, SLOT2, SLOT3, SLOT4, SLOT5, SLOT6, SLOT7, SLOT8, SLOT9, SLOT10, SLOT11, SLOT12, SLOT13, SLOT14, SLOT15, SLOT16, SLOT17, SLOT18, SLOT19, SLOT20, Gold)''')
     c.execute('''CREATE TABLE Equipment (Name, Mainhand, Offhand, Helmet, Body, Lowerbody, Boots)''')
     c.execute('''CREATE TABLE Vitals (Name, Health, Mana, ThreatMultiplier)''')
-    c.execute('''CREATE TABLE Regions (Name, Mobcount)''')
+    c.execute('''CREATE TABLE RegionMobs (Name, Mob1, Mob2, Mob3, Mob4, Mob5, Mob6, Mob7, Mob8, Mob9, Mob10)''')
+    c.execute('''CREATE TABLE RegionIgnoreRooms (Name, Room1, Room2, Room3, Room4, Room5, Room6, Room7, Room8, Room9, Room10)''')
+    c.execute('''CREATE TABLE Regions (Name, Mobcount, MobMax, SpawnRate, RoomMobMax, Roommin, Roommax)''')
     c.execute('''CREATE TABLE RoomExits (ID, Description, NorthDecription, EastDescription, SouthDescription, WestDescription, North, East, South, West, CoordX, CoordY, CoordZ)''')
     c.execute('''CREATE TABLE RoomMobs (ID, Slot1, Slot2, Slot3, Slot4, Slot5, Slot6, Slot7, Slot8, Slot9, Slot10)''')
     c.execute('''CREATE TABLE RoomItems (ID, Slot1, Slot2, Slot3, Slot4, Slot5, Slot6, Slot7, Slot8, Slot9, Slot10, Slot11, Slot12, Slot13, Slot14, Slot15, Slot16, Slot17, Slot18, Slot19, Slot20)''')
@@ -26,11 +27,12 @@ def Create():
     c.execute('''CREATE TABLE Monsters (ID, Name, Level, Strength, Constitution, Dexterity, Agility, Wisdom, Intellegence)''')
     c.execute('''CREATE TABLE MonsterAttacks (ID, Attack1, Min1, Max1, Attack2, Min2, Max2, Attack3, Min3, Max3, Attack4, Min4, Max4)''')
     c.execute('''CREATE TABLE MonsterLoot (ID, Goldmin, Goldmax, Item1, Item2, Item3, Item4, Item5, Item6, Item7)''')
-    c.execute('''CREATE TABLE ActiveMonster (RandomID, MobID, Level, Name, Health, MaxHealth, Mana, MaxMana, Attack, Defence, Speed, Critical, Accuracy, Dodge, Mattack, Mdefence, Room, AttackBool, Region)''')
+    c.execute('''CREATE TABLE ActiveMonster (RandomID, MobID, Level, Name, Health, MaxHealth, Mana, MaxMana, Attack, Defence, Speed, Critical, Accuracy, Dodge, Mattack, Mdefence, Room, AttackBool, Region, Stun)''')
+    c.execute('''CREATE TABLE PlayerBonusStats (Name, Maxhealth, MaxMana, HpRegen, MpRegen, Critical, Dodge, StrDmg, IntDmg, PhsDmgResist, MagDmgResist, Accuracy, MagicAccuracy, MagicDodge)''')
     c.execute('''CREATE TABLE MonsterThreat (RandomID, Player1, Threat1, Player2, Threat2, Player3, Threat3, Player4, Threat4, Player5, Threat5, Player6, Threat6)''')
     c.execute('''CREATE TABLE Gear (ID, Name, Slot, MinValue, MaxValue, Attackspeed)''')
     c.execute('''CREATE TABLE RoomUpDown (ID, Up, Down)''')
-    c.execute('''CREATE TABLE ServerTime (Server, Minutes, Hours, Night)''')
+    c.execute('''CREATE TABLE ServerTime (Server, Minutes, Hours, Night, Day, Month)''')
     c.execute('''CREATE TABLE ClassSkills (Class, Skillname, Level)''')
     c.execute('''CREATE TABLE PlayerSkills (Name, Climblevel, ClimbExp, Sneaklevel, SneakExp, Swimlevel, SwimExp, Foragelevel, ForageExp, Logginglevel, LoggingExp, Mininglevel, MiningExp, Buildinglevel, BuildingExp, Stonecuttinglevel, StonecuttingExp, Tanninglevel, TanningExp, Woodlevel, Woodexp)''')
     conn.commit()
@@ -39,14 +41,29 @@ def Create():
     #    ]
 
     #c.executemany()
-    c.execute('''INSERT INTO ServerTime VALUES (?,?,?,?)''', ('Server', 0, 0, False))
+    c.execute('''INSERT INTO ServerTime VALUES (?,?,?,?,? ,?)''', ('Server', 0, 0, False, 1, 1))
 
-    regions = [('Exordior Cave', 0),
-               ('Exordior Mine', 0)
+    regions = [('Exordior Cave', 0, 15, 5, 2, 13, 29),
+               ('Exordior Mine', 0, 38, 5, 2, 30, 64),
+               ('Bratus Nemus', 0, 97, 5, 3, 66, 110)
+        ]
+
+    regionmobs = [
+        ('Exordior Cave', 1, 3, 7, '', '', '', '', '', '', ''),
+        ('Exordior Mine', 4, 5, 10, '', '', '', '', '', '', ''),
+        ('Bratus Nemus', 7, 8, 9, 10, 11, 12, 14, 15, 16, 18)
+        ]
+
+    regionignore = [
+        ('Exordior Cave', 13, 14, 20, '', '', '', '', '', '', ''),
+        ('Exordior Mine', 30, 50, '', '', '', '', '', '', '', ''),
+        ('Bratus Nemus', 69, 72, 88, '', '', '', '', '', '', ''),
         ]
 
     roomupdown = [(20, None, 30),
-                  (30, 20, None)
+                  (30, 20, None),
+                  (72, None, 49,),
+                  (49, 72, None)
         ]
 
     # ID, Description, N, E, S, W
@@ -120,134 +137,160 @@ def Create():
         c.execute('''INSERT INTO RoomPlayers VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', roomplayers)
         count += 1
 
-    # creates 1000 empty rooms for players
+    # creates 1000 empty rooms for items
     count = 1
     while count <= 1000:
         roomitems = (count, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '')
         c.execute('''INSERT INTO RoomItems VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', roomitems)
         count += 1
 
-    c.executemany('''INSERT INTO Regions VALUES (?,?)''', regions)
+    c.executemany('''INSERT INTO Regions VALUES (?,?,?,?,?,?,?)''', regions)
+    c.executemany('''INSERT INTO RegionMobs VALUES (?,?,?,?,?,?,?,?,?,?,?)''', regionmobs)
+    c.executemany('''INSERT INTO RegionIgnoreRooms VALUES (?,?,?,?,?,?,?,?,?,?,?)''', regionignore)
 
     c.executemany('''INSERT INTO RoomExits VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''', roomentries)
 
     # IMPORTS PLAYERS FROM OLD DATABASE
-#    try:
-    for row in c2.execute('SELECT * From ID'):
-        Name = row[0]
-        Password = row[1]
-        Permission = row[2]
-        ChatInstance = row[3]
-        character = (Name, Password, Permission, ChatInstance,)
-        c.execute('INSERT INTO ID VALUES (?,?,?,?)', character)
+    try:
+        c2.execute('SELECT * FROM ID')
+        rows = c2.fetchall()
+        for row in rows:
+            Name = row[0]
+            Password = row[1]
+            Permission = row[2]
+            ChatInstance = row[3]
+            character = (Name, Password, Permission, ChatInstance,)
+            c.execute('INSERT INTO ID VALUES (?,?,?,?)', character)
 
-        # Room doubling
-        c2.execute('SELECT * From Placement Where Name=?', (Name,))
-        fetch = c2.fetchone()
-        Name = fetch[0]
-        Room = fetch[1]
-        Place = (Name, Room,)
-        c.execute('INSERT INTO Placement VALUES(?,?)', Place)
+            # Room doubling
+            c2.execute('SELECT * From Placement Where Name=?', (Name,))
+            fetch = c2.fetchone()
+            Name = fetch[0]
+            Room = fetch[1]
+            Place = (Name, Room,)
+            c.execute('INSERT INTO Placement VALUES(?,?)', Place)
 
-        # Skills doubling
-        c2.execute('SELECT * From PlayerSkills Where Name=?', (Name,))
-        fetch = c2.fetchone()
-        Name = fetch[0]
-        Climblevel = fetch[1]
-        ClimbExp = fetch[2]
-        Sneaklevel = fetch[3]
-        SneakExp = fetch[4]
-        Swimlevel = fetch[5]
-        SwimExp = fetch[6]
-        Foragelevel = fetch[7]
-        ForageExp = fetch[8]
-        Logginglevel = fetch[9]
-        LoggingExp = fetch[10]
-        Mininglevel = fetch[11]
-        MiningExp = fetch[12]
-        Buildinglevel = fetch[13]
-        BuildingExp = fetch[14]
-        Stonecuttinglevel = fetch[15]
-        StonecuttingExp = fetch[16]
-        Tanninglevel = fetch[17]
-        TanningExp = fetch[18]
-        Woodlevel = fetch[19]
-        Woodexp = fetch[20]
-        skills = (Name, Climblevel, ClimbExp, Sneaklevel, SneakExp, Swimlevel, SwimExp, Foragelevel, ForageExp, Logginglevel, LoggingExp, Mininglevel, MiningExp, Buildinglevel, BuildingExp, Stonecuttinglevel, StonecuttingExp, Tanninglevel, TanningExp, Woodlevel, Woodexp)
-        c.execute('INSERT INTO PlayerSkills VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', skills)
+            # Skills doubling
+            c2.execute('SELECT * From PlayerSkills Where Name=?', (Name,))
+            fetch = c2.fetchone()
+            Name = fetch[0]
+            Climblevel = fetch[1]
+            ClimbExp = fetch[2]
+            Sneaklevel = fetch[3]
+            SneakExp = fetch[4]
+            Swimlevel = fetch[5]
+            SwimExp = fetch[6]
+            Foragelevel = fetch[7]
+            ForageExp = fetch[8]
+            Logginglevel = fetch[9]
+            LoggingExp = fetch[10]
+            Mininglevel = fetch[11]
+            MiningExp = fetch[12]
+            Buildinglevel = fetch[13]
+            BuildingExp = fetch[14]
+            Stonecuttinglevel = fetch[15]
+            StonecuttingExp = fetch[16]
+            Tanninglevel = fetch[17]
+            TanningExp = fetch[18]
+            Woodlevel = fetch[19]
+            Woodexp = fetch[20]
+            skills = (Name, Climblevel, ClimbExp, Sneaklevel, SneakExp, Swimlevel, SwimExp, Foragelevel, ForageExp, Logginglevel, LoggingExp, Mininglevel, MiningExp, Buildinglevel, BuildingExp, Stonecuttinglevel, StonecuttingExp, Tanninglevel, TanningExp, Woodlevel, Woodexp)
+            c.execute('INSERT INTO PlayerSkills VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', skills)
 
-        # Character Doubling
-        c2.execute('SELECT * From Character Where Name=?', (Name,))
-        fetch = c2.fetchone()
-        Name = fetch[0]
-        Class = fetch[1]
-        Level = fetch[2]
-        Exp = fetch[3]
-        Exptnl = fetch[4]
-        Strength = fetch[5]
-        Constitution = fetch[6]
-        Dexterity = fetch[7]
-        Agility = fetch[8]
-        Wisdom = fetch[9]
-        Intellegence = fetch[10]
-        Race = fetch[11]
-        Character = (Name, Class, Level, Exp, Exptnl, Strength, Constitution, Dexterity, Agility, Wisdom, Intellegence, Race)
-        c.execute('INSERT INTO Character VALUES(?,?,?,?,?,?,?,?,?,?,?,?)', Character)
+            # Character Doubling
+            c2.execute('SELECT * From Character Where Name=?', (Name,))
+            fetch = c2.fetchone()
+            Name = fetch[0]
+            Class = fetch[1]
+            Level = fetch[2]
+            Exp = fetch[3]
+            Exptnl = fetch[4]
+            Strength = fetch[5]
+            Constitution = fetch[6]
+            Dexterity = fetch[7]
+            Agility = fetch[8]
+            Wisdom = fetch[9]
+            Intellegence = fetch[10]
+            Race = fetch[11]
+            Gender = fetch[12]
+            Character = (Name, Class, Level, Exp, Exptnl, Strength, Constitution, Dexterity, Agility, Wisdom, Intellegence, Race, Gender)
+            c.execute('INSERT INTO Character VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)', Character)
 
-        # Inventory Doubling
-        c2.execute('SELECT * From Inventory Where Name=?', (Name,))
-        fetch = c2.fetchone()
-        Name = fetch[0]
-        SLOT1 = fetch[1]
-        SLOT2 = fetch[2]
-        SLOT3 = fetch[3]
-        SLOT4 = fetch[4]
-        SLOT5 = fetch[5]
-        SLOT6 = fetch[6]
-        SLOT7 = fetch[7]
-        SLOT8 = fetch[8]
-        SLOT9 = fetch[9]
-        SLOT10 = fetch[10]
-        SLOT11 = fetch[11]
-        SLOT12 = fetch[12]
-        SLOT13 = fetch[13]
-        SLOT14 = fetch[14]
-        SLOT15 = fetch[15]
-        SLOT16 = fetch[16]
-        SLOT17 = fetch[17]
-        SLOT18 = fetch[18]
-        SLOT19 = fetch[19]
-        SLOT20 = fetch[20]
-        Gold = fetch[21]
-        Inventory = (Name, SLOT1, SLOT2, SLOT3, SLOT4, SLOT5, SLOT6, SLOT7, SLOT8, SLOT9, SLOT10, SLOT11, SLOT12, SLOT13, SLOT14, SLOT15, SLOT16, SLOT17, SLOT18, SLOT19, SLOT20, Gold)
-        c.execute('INSERT INTO Inventory VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', Inventory)
+            # Inventory Doubling
+            c2.execute('SELECT * From Inventory Where Name=?', (Name,))
+            fetch = c2.fetchone()
+            Name = fetch[0]
+            SLOT1 = fetch[1]
+            SLOT2 = fetch[2]
+            SLOT3 = fetch[3]
+            SLOT4 = fetch[4]
+            SLOT5 = fetch[5]
+            SLOT6 = fetch[6]
+            SLOT7 = fetch[7]
+            SLOT8 = fetch[8]
+            SLOT9 = fetch[9]
+            SLOT10 = fetch[10]
+            SLOT11 = fetch[11]
+            SLOT12 = fetch[12]
+            SLOT13 = fetch[13]
+            SLOT14 = fetch[14]
+            SLOT15 = fetch[15]
+            SLOT16 = fetch[16]
+            SLOT17 = fetch[17]
+            SLOT18 = fetch[18]
+            SLOT19 = fetch[19]
+            SLOT20 = fetch[20]
+            Gold = fetch[21]
+            Inventory = (Name, SLOT1, SLOT2, SLOT3, SLOT4, SLOT5, SLOT6, SLOT7, SLOT8, SLOT9, SLOT10, SLOT11, SLOT12, SLOT13, SLOT14, SLOT15, SLOT16, SLOT17, SLOT18, SLOT19, SLOT20, Gold)
+            c.execute('INSERT INTO Inventory VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', Inventory)
 
-        # Equipment Doubling
-        c2.execute('SELECT * From Equipment Where Name=?', (Name,))
-        fetch = c2.fetchone()
-        Name = fetch[0]
-        Mainhand = fetch[1]
-        Offhand = fetch[2]
-        Helmet = fetch[3]
-        Body = fetch[4]
-        Lowerbody = fetch[5]
-        Boots = fetch[6]
-        Equip = (Name, Mainhand, Offhand, Helmet, Body, Lowerbody, Boots)
-        c.execute('INSERT INTO Equipment VALUES(?,?,?,?,?,?,?)', Equip)
+            # Equipment Doubling
+            c2.execute('SELECT * From Equipment Where Name=?', (Name,))
+            fetch = c2.fetchone()
+            Name = fetch[0]
+            Mainhand = fetch[1]
+            Offhand = fetch[2]
+            Helmet = fetch[3]
+            Body = fetch[4]
+            Lowerbody = fetch[5]
+            Boots = fetch[6]
+            Equip = (Name, Mainhand, Offhand, Helmet, Body, Lowerbody, Boots)
+            c.execute('INSERT INTO Equipment VALUES(?,?,?,?,?,?,?)', Equip)
 
-        # Vitals Doubling
-        c2.execute('SELECT * From Vitals Where Name=?', (Name,))
-        fetch = c2.fetchone()
-        Name = fetch[0]
-        Health = fetch[1]
-        Mana = fetch[2]
-        ThreatMultiplier = fetch[3]
-        Vitals = (Name, Health, Mana, ThreatMultiplier)
-        c.execute('INSERT INTO Vitals VALUES(?,?,?,?)', Vitals)
-    print "Backup found copied in!"
-#    except:
-#        print "No Backup Database... Creating one"
-#        Databasecreate2.Create2()
+            # Vitals Doubling
+            c2.execute('SELECT * From Vitals Where Name=?', (Name,))
+            fetch = c2.fetchone()
+            Name = fetch[0]
+            Health = fetch[1]
+            Mana = fetch[2]
+            ThreatMultiplier = fetch[3]
+            Vitals = (Name, Health, Mana, ThreatMultiplier)
+            c.execute('INSERT INTO Vitals VALUES(?,?,?,?)', Vitals)
+
+            # Bonus Stat Doubling
+            c2.execute('SELECT * FROM PlayerBonusStats WHERE Name=?', (Name,))
+            fetch = c2.fetchone()
+            Name = fetch[0]
+            Maxhealth = fetch[1]
+            MaxMana = fetch[2]
+            HpRegen = fetch[3]
+            MpRegen = fetch[4]
+            Critical = fetch[5]
+            Dodge = fetch[6]
+            StrDmg = fetch[7]
+            IntDmg = fetch[8]
+            PhsDmgResist = fetch[9]
+            MagDmgResist = fetch[10]
+            Accuracy = fetch[11]
+            MagicAccuracy = fetch[12]
+            MagicDodge = fetch[13]
+            statbonus = (Name, Maxhealth, MaxMana, HpRegen, MpRegen, Critical, Dodge, StrDmg, IntDmg, PhsDmgResist, MagDmgResist, Accuracy, MagicAccuracy, MagicDodge)
+            c.execute('INSERT INTO PlayerBonusStats VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)', statbonus)
+            print Name, "was loaded in from backup"
+    except:
+        print "No Backup Database... Creating one"
+        import Databasecreate2
+        Databasecreate2.Create2()
 
     #for row in c.execute('''SELECT * from Monsters ORDER BY ID'''):
     #    print row
